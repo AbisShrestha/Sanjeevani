@@ -1,0 +1,24 @@
+services:
+  backend:
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - DB_HOST=sanjeevani-db
+      - DB_PORT=5432
+      - DB_USER=sanjeevani_user
+      - DB_PASSWORD=sanjeevani_pass
+      - DB_NAME=sanjeevani_db
+      - JWT_SECRET=mySuperSecretJWTKey
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    restart: always
+    volumes:
+      - ./uploads:/app/uploads
+      - ./src:/app/src
+    networks:
+      - sanjeevani_default
+
+networks:
+  sanjeevani_default:
+    external: true
