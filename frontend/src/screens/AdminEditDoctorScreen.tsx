@@ -100,14 +100,6 @@ const AdminEditDoctorScreen = ({ navigation, route }: { navigation: any; route: 
 
     return (
         <ScrollView className="flex-1 bg-[#F5F7FA]">
-            {/* Header */}
-            <View className={`bg-white shadow-sm flex-row items-center px-5 py-4 ${Platform.OS === 'ios' ? 'pt-12' : ''}`}>
-                <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2">
-                    <FontAwesome5 name="arrow-left" size={20} color="#37474F" />
-                </TouchableOpacity>
-                <Text className="text-xl font-bold text-[#37474F] ml-4">Edit Doctor</Text>
-            </View>
-
             <View className="p-5">
                 <View className="items-center mb-6">
                     <TouchableOpacity onPress={pickImage} className="relative">
