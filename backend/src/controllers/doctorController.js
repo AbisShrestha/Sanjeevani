@@ -67,10 +67,10 @@ const getAllDoctors = async (req, res) => {
         const existingNames = new Set(doctors.map(d => d.name.toLowerCase()));
         
         const formattedUserDoctors = userDoctors
-            .filter(user => !existingNames.has(user.fullname.toLowerCase()))
+            .filter(user => user.fullName && !existingNames.has(user.fullName.toLowerCase()))
             .map(user => ({
-                id: `u-${user.userid}`, 
-                name: user.fullname,
+                id: `u-${user.userId || user.userid}`, 
+                name: user.fullName || user.fullname,
                 specialty: 'Ayurvedic Practitioner',
                 qualification: 'Verified User',
                 experience: 'Unknown',
