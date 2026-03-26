@@ -32,7 +32,7 @@ services:
   backend:
     build: .
     ports:
-      - "4000:4000"
+      - "80:4000"
     environment:
       - PORT=4000
       - DB_HOST=sanjeevani-db
