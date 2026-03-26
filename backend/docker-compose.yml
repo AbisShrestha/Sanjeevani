@@ -1,4 +1,34 @@
+version: "3"
 services:
+  sanjeevani-db:
+    image: postgres:16
+    container_name: sanjeevani-db
+    environment:
+      - POSTGRES_USER=sanjeevani_user
+      - POSTGRES_PASSWORD=sanjeevani_pass
+      - POSTGRES_DB=sanjeevani_db
+    ports:
+      - 5432:5432
+    restart: always
+    volumes:
+      - sanjeevani_db_data:/var/lib/postgresql/data
+    networks:
+      - sanjeevani_default
+
+  sanjeevani-pgadmin:
+    image: dpage/pgadmin4
+    container_name: sanjeevani-pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@sanjeevani.com
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+    ports:
+      - 5050:80
+    restart: always
+    depends_on:
+      - sanjeevani-db
+    networks:
+      - sanjeevani_default
+
   backend:
     build: .
     ports:
@@ -21,4 +51,8 @@ services:
 
 networks:
   sanjeevani_default:
+    driver: bridge
+
+volumes:
+  sanjeevani_db_data:
     external: true

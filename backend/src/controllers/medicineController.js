@@ -2,6 +2,29 @@ const medicineModel = require('../models/medicineModel');
 const fs = require('fs');
 const path = require('path');
 
+/**
+ * Helper to delete an image file from the server
+ */
+const deleteImageFile = (imageUrl) => {
+  if (!imageUrl) return;
+  try {
+    // Works with both "uploads/file.jpg" and "http://.../uploads/file.jpg"
+    const filename = path.basename(imageUrl.split('?')[0]);
+    
+    // Safety check: Don't delete placeholder URLs from external sites
+    if (!filename || filename.includes('via.placeholder.com')) return;
+
+    const filePath = path.join(__dirname, '../../uploads', filename);
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`Deleted old image file: ${filePath}`);
+    }
+  } catch (err) {
+    console.error("Failed to delete image file:", err);
+  }
+};
+
 /* 
    ADMIN: ADD MEDICINE
    This function receives data from the App and saves it to the Database.
@@ -101,11 +124,27 @@ const addMedicine = async (req, res) => {
 };
 
 /* 
-   GET ALL MEDICINES
+   GET ALL MEDICINES (with optional server-side search)
+   Query params: ?search=text&category=Herbs&sort=lowHigh|highLow
 */
 const getMedicines = async (req, res) => {
   try {
-    const medicines = await medicineModel.getAllMedicines();
+    const { search, category, sort } = req.query;
+    
+    // If any filter/search params exist, use server-side search
+    const hasFilters = search || (category && category.toLowerCase() !== 'all') || (sort && sort !== 'none');
+    
+    let medicines;
+    if (hasFilters) {
+      medicines = await medicineModel.searchMedicines({
+        search: search || '',
+        category: category || '',
+        sortBy: sort || 'none',
+      });
+    } else {
+      medicines = await medicineModel.getAllMedicines();
+    }
+    
     res.json(medicines);
   } catch (error) {
     console.error(error);
@@ -153,7 +192,16 @@ const updateMedicine = async (req, res) => {
       imageUrl,
     } = req.body;
 
+    // Fetch existing medicine to check if we need to delete the old image
+    const existingMedicine = await medicineModel.getMedicineById(medicineId);
+    if (!existingMedicine) {
+      return res.status(404).json({ message: 'Medicine not found' });
+    }
 
+    // If new imageUrl is provided and it's different from the old one, delete the old one
+    if (imageUrl && existingMedicine.imageurl && existingMedicine.imageurl !== imageUrl) {
+       deleteImageFile(existingMedicine.imageurl);
+    }
 
     const updateData = {
       name: name?.trim(),
@@ -228,22 +276,8 @@ const deleteMedicine = async (req, res) => {
       return res.status(404).json({ message: 'Medicine not found' });
     }
 
-    // 2. Delete Image File if it exists (and is local)
-    if (medicine.imageurl && !medicine.imageurl.startsWith('http')) {
-      try {
-        // Extract filename from path (e.g. /uploads/image.jpg -> image.jpg)
-        const filename = path.basename(medicine.imageurl);
-        const filePath = path.join(__dirname, '../../uploads', filename);
-
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-          console.log(`Deleted image file: ${filePath}`);
-        }
-      } catch (err) {
-        console.error("Failed to delete image file:", err);
-        // Continue to delete info from DB even if file delete fails
-      }
-    }
+    // 2. Delete Image File if it exists
+    deleteImageFile(medicine.imageurl);
 
     // 3. Delete from Database
     const deleted = await medicineModel.deleteMedicine(medicineId);

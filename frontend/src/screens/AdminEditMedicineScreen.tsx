@@ -10,13 +10,15 @@ import {
   Modal,
   FlatList,
   Platform,
-  Image
+  Image,
+  KeyboardAvoidingView
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import api from '../services/api';
 import { buildImageUri } from '../utils/image';
 import * as ImagePicker from 'expo-image-picker';
+import { uploadImage } from '../services/fileUploadService';
 
 /* 
    CATEGORY OPTIONS (Same as Add Screen)
@@ -42,7 +44,11 @@ const AdminEditMedicineScreen = ({ navigation, route }: { navigation: any; route
   const [price, setPrice] = useState(medicine.price.toString());
   const [stock, setStock] = useState(medicine.stock.toString());
   const [description, setDescription] = useState(medicine.description || '');
-  const [category, setCategory] = useState(medicine.category || 'Herbs');
+  const [dosage, setDosage] = useState(medicine.dosage || '');
+  const [benefits, setBenefits] = useState(medicine.benefits || '');
+  const [usageInstructions, setUsageInstructions] = useState(medicine.usageinstructions || '');
+  const [precautions, setPrecautions] = useState(medicine.precautions || '');
+  const [categoryId, setCategoryId] = useState(String(medicine.categoryid || '1'));
   const [image, setImage] = useState(medicine.imageurl);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -57,29 +63,17 @@ const AdminEditMedicineScreen = ({ navigation, route }: { navigation: any; route
     });
 
     if (!result.canceled) {
-      uploadImage(result.assets[0].uri);
-    }
-  };
-
-  // Upload to Backend
-  const uploadImage = async (uri: string) => {
-    setUploading(true);
-    const formData = new FormData();
-    formData.append('image', {
-      uri,
-      name: 'medicine.jpg',
-      type: 'image/jpeg',
-    } as any);
-
-    try {
-      const res = await api.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      setImage(res.data.imageUrl); // Path from server
-    } catch (error) {
-      Alert.alert("Upload Failed", "Could not upload image.");
-    } finally {
-      setUploading(false);
+      setUploading(true);
+      try {
+        const uploadedUrl = await uploadImage(result.assets[0]);
+        if (uploadedUrl) {
+           setImage(uploadedUrl);
+        }
+      } catch (error) {
+        Alert.alert("Upload Failed", "Could not upload image via tunnel.");
+      } finally {
+        setUploading(false);
+      }
     }
   };
 
@@ -96,8 +90,12 @@ const AdminEditMedicineScreen = ({ navigation, route }: { navigation: any; route
         price: parseFloat(price),
         stock: parseInt(stock),
         description,
-        category,
-        imageurl: image
+        dosage,
+        benefits,
+        usageInstructions,
+        precautions,
+        categoryId: parseInt(categoryId),
+        imageUrl: image
       });
       Alert.alert("Success", "Medicine updated!", [
         { text: "OK", onPress: () => navigation.goBack() }
@@ -112,18 +110,23 @@ const AdminEditMedicineScreen = ({ navigation, route }: { navigation: any; route
   const displayImage = buildImageUri(image);
 
   return (
-    <ScrollView className="flex-1 bg-[#F5F7FA]">
+    <View style={{ flex: 1, backgroundColor: '#F5F7FA' }}>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+      style={{ flex: 1 }}
+    >
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 120 }}>
       <View className="p-5">
         {/* Image Upload */}
         <View className="items-center mb-6">
           <TouchableOpacity onPress={pickImage} className="relative">
             <Image
               source={{ uri: displayImage || 'https://via.placeholder.com/150' }}
-              className="w-[120px] h-[120px] rounded-2xl bg-[#eee]"
+              style={{ width: 200, height: 200, borderRadius: 20, backgroundColor: '#eee' }}
               resizeMode="contain"
             />
-            <View className="absolute -bottom-2 -right-2 bg-[#00695C] p-2 rounded-full border-[3px] border-white">
-              <FontAwesome5 name="camera" size={14} color="#fff" />
+            <View className="absolute -bottom-2 -right-2 bg-[#00695C] p-2.5 rounded-full border-[3px] border-white">
+              <FontAwesome5 name="camera" size={16} color="#fff" />
             </View>
           </TouchableOpacity>
           {uploading && <ActivityIndicator color="#00695C" className="mt-2" />}
@@ -164,42 +167,88 @@ const AdminEditMedicineScreen = ({ navigation, route }: { navigation: any; route
 
           <View>
             <Text className="text-xs font-bold text-[#666] uppercase mb-1">Category</Text>
-            <TextInput
-              className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base"
-              value={category}
-              onChangeText={setCategory}
+            <CustomDropdown
+              options={CATEGORY_OPTIONS}
+              selectedValue={categoryId}
+              onValueChange={setCategoryId}
+              placeholder="Select Category..."
             />
           </View>
 
           <View>
             <Text className="text-xs font-bold text-[#666] uppercase mb-1">Description</Text>
             <TextInput
-              className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base h-[100px]"
+              className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base h-[80px]"
               value={description}
               onChangeText={setDescription}
               multiline
               textAlignVertical="top"
             />
           </View>
-        </View>
 
-        {/* Save Button */}
-        <TouchableOpacity
-          className="bg-[#00695C] py-4 rounded-xl mt-6 shadow-md shadow-[#00695C]/30 flex-row justify-center items-center"
-          onPress={handleUpdate}
-          disabled={loading || uploading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <FontAwesome5 name="save" size={18} color="#fff" />
-              <Text className="text-white font-bold text-lg ml-2">Update Medicine</Text>
-            </>
-          )}
-        </TouchableOpacity>
+          <View>
+            <Text className="text-xs font-bold text-[#666] uppercase mb-1">Dosage</Text>
+            <TextInput
+              className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base"
+              value={dosage}
+              onChangeText={setDosage}
+              multiline
+            />
+          </View>
+
+          <View>
+            <Text className="text-xs font-bold text-[#666] uppercase mb-1">Usage Instructions</Text>
+            <TextInput
+              className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base h-[60px]"
+              value={usageInstructions}
+              onChangeText={setUsageInstructions}
+              multiline
+            />
+          </View>
+
+          <View>
+            <Text className="text-xs font-bold text-[#666] uppercase mb-1">Benefits</Text>
+            <TextInput
+              className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base h-[60px]"
+              value={benefits}
+              onChangeText={setBenefits}
+              multiline
+            />
+          </View>
+
+          <View>
+            <Text className="text-xs font-bold text-[#666] uppercase mb-1">Precautions</Text>
+            <TextInput
+              className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base h-[60px]"
+              value={precautions}
+              onChangeText={setPrecautions}
+              multiline
+            />
+          </View>
+        </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
+
+    {/* Floating Save Button */}
+    <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-[#ECEFF1] shadow-xl">
+      <TouchableOpacity
+        className="bg-[#00695C] py-4 rounded-[16px] items-center flex-row justify-center shadow-sm"
+        onPress={handleUpdate}
+        disabled={loading || uploading}
+        activeOpacity={0.9}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <>
+            <FontAwesome5 name="save" size={18} color="#fff" />
+            <Text className="text-white font-bold text-base ml-2 tracking-wide">Update Medicine</Text>
+          </>
+        )}
+      </TouchableOpacity>
+    </View>
+    </View>
   );
 };
 

@@ -140,7 +140,7 @@ const getMyAppointmentsAsDoctor = async (req, res) => {
     try {
         const doctorId = req.user.userId;
         const query = `
-            SELECT c.consultationid as id, c.scheduledat as appointment_date, c.status, c.meetinglink as jitsi_link, u.fullName as patient_name, u.email as patient_email
+            SELECT c.consultationid as id, c.userid as patient_id, c.scheduledat as appointment_date, c.status, c.meetinglink as jitsi_link, u.fullName as patient_name, u.email as patient_email
             FROM consultations c
             JOIN users u ON c.userid = u.userId
             WHERE c.doctorid = $1

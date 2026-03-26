@@ -7,6 +7,7 @@ const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.error(`[AUTH_ERROR] 401 No Token! Route: ${req.method} ${req.originalUrl}`);
     return res
       .status(401)
       .json({ message: 'Access denied. No token provided.' });

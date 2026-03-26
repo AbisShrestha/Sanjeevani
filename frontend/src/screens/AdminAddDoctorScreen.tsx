@@ -129,7 +129,7 @@ const AdminAddDoctorScreen = ({ navigation }: { navigation: any }) => {
 
                     <View>
                         <Text className="text-xs font-bold text-[#666] uppercase mb-1">Specialty</Text>
-                        <TextInput className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base" value={specialty} onChangeText={setSpecialty} placeholder="e.g. Cardiologist" />
+                        <TextInput className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base" value={specialty} onChangeText={setSpecialty} placeholder="e.g. General Physician, Skin Specialist" />
                     </View>
 
                     <View className="flex-row justify-between">

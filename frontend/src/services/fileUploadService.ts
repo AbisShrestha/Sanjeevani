@@ -5,30 +5,32 @@ import api, { SERVER_URL } from './api';
 /* 
   This function uploads an image to YOUR backend server.
 */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 export const uploadImage = async (asset: ImagePicker.ImagePickerAsset) => {
-  // 1. Check if we have valid image data
   if (!asset || !asset.uri) {
-    return null; // Stop if there is no image data
+    return null;
   }
 
-  // 2. Prepare FormData
   const formData = new FormData();
 
   const filename = asset.fileName || asset.uri.split('/').pop() || 'upload.jpg';
   const match = /\.(\w+)$/.exec(filename);
   const type = match ? `image/${match[1]}` : 'image/jpeg';
 
-  // @ts-ignore: FormData in React Native expects an object with uri, name, type
+  // @ts-ignore
   formData.append('file', { uri: asset.uri, name: filename, type });
 
+  // Explicitly fetch token since transformRequest might strip the interceptor headers
+  const token = await AsyncStorage.getItem('token');
+
   try {
-    // 3. Send to Backend using our configured Axios instance (includes Tunnel headers)
     const response = await api.post('/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
       },
       transformRequest: (data, headers) => {
-        // Axios hack for React Native FormData
         return formData;
       },
     });

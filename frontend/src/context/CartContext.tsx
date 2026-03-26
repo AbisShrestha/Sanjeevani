@@ -18,6 +18,7 @@ interface CartContextType {
     removeFromCart: (medicineId: number) => Promise<void>;
     updateQuantity: (medicineId: number, change: number) => Promise<void>;
     clearCart: () => Promise<void>;
+    refreshCartAuth: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -26,10 +27,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [cartCount, setCartCount] = useState(0);
     const [totalPrice, setTotalPrice] = useState(0);
+    const [cartKey, setCartKey] = useState<string>('cart_guest');
 
     // Load cart on mount
     useEffect(() => {
-        loadCart();
+        refreshCartAuth();
     }, []);
 
     // Update derived state whenever cartItems change
@@ -40,20 +42,47 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setTotalPrice(total);
     }, [cartItems]);
 
-    const loadCart = async () => {
+    const refreshCartAuth = async () => {
         try {
-            const storedCart = await AsyncStorage.getItem('cart');
+            const userData = await AsyncStorage.getItem('user');
+            const token = await AsyncStorage.getItem('token');
+            let newCartKey = 'cart_guest';
+            
+            // Only use auth cart if BOTH user data and token are present (strict separation)
+            if (userData && token) {
+                const user = JSON.parse(userData);
+                
+                // PostgreSQL returns lowercase userid. Handle all variations safely to prevent 'cart_undefined' bug.
+                const uniqueId = user.userid || user.userId || user.id || user._id;
+                
+                if (uniqueId) {
+                    newCartKey = `cart_user_${uniqueId}`;
+                }
+            }
+            
+            setCartKey(newCartKey);
+            await loadCart(newCartKey);
+        } catch (e) {
+            console.error('Failed to refresh auth state for cart', e);
+        }
+    };
+
+    const loadCart = async (key: string = cartKey) => {
+        try {
+            const storedCart = await AsyncStorage.getItem(key);
             if (storedCart) {
                 setCartItems(JSON.parse(storedCart));
+            } else {
+                setCartItems([]);
             }
         } catch (e) {
             console.error('Failed to load cart', e);
         }
     };
 
-    const saveCart = async (items: CartItem[]) => {
+    const saveCart = async (items: CartItem[], key: string = cartKey) => {
         try {
-            await AsyncStorage.setItem('cart', JSON.stringify(items));
+            await AsyncStorage.setItem(key, JSON.stringify(items));
             setCartItems(items);
         } catch (e) {
             console.error('Failed to save cart', e);
@@ -70,18 +99,21 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             } else {
                 newCart.push({ ...item, quantity: 1 });
             }
-            AsyncStorage.setItem('cart', JSON.stringify(newCart)).catch(e => console.error(e));
+            // Use current state via useState callback, but we need the latest cartKey.
+            // Since cartKey changes infrequently, we'll let the provider closure handle it 
+            // but wrap in effect if needed. It's safe here.
+            AsyncStorage.setItem(cartKey, JSON.stringify(newCart)).catch(e => console.error(e));
             return newCart;
         });
-    }, []);
+    }, [cartKey]);
 
     const removeFromCart = React.useCallback(async (medicineId: number) => {
         setCartItems((currentItems) => {
             const newCart = currentItems.filter((item) => item.medicineid !== medicineId);
-            AsyncStorage.setItem('cart', JSON.stringify(newCart)).catch(e => console.error(e));
+            AsyncStorage.setItem(cartKey, JSON.stringify(newCart)).catch(e => console.error(e));
             return newCart;
         });
-    }, []);
+    }, [cartKey]);
 
     const updateQuantity = React.useCallback(async (medicineId: number, change: number) => {
         setCartItems((currentItems) => {
@@ -91,15 +123,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                 }
                 return item;
             });
-            AsyncStorage.setItem('cart', JSON.stringify(newCart)).catch(e => console.error(e));
+            AsyncStorage.setItem(cartKey, JSON.stringify(newCart)).catch(e => console.error(e));
             return newCart;
         });
-    }, []);
+    }, [cartKey]);
 
     const clearCart = React.useCallback(async () => {
-        await AsyncStorage.removeItem('cart');
+        await AsyncStorage.removeItem(cartKey);
         setCartItems([]);
-    }, []);
+    }, [cartKey]);
 
     const value = React.useMemo(() => ({
         cartItems,
@@ -109,7 +141,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         removeFromCart,
         updateQuantity,
         clearCart,
-    }), [cartItems, cartCount, totalPrice, addToCart, removeFromCart, updateQuantity, clearCart]);
+        refreshCartAuth,
+    }), [cartItems, cartCount, totalPrice, addToCart, removeFromCart, updateQuantity, clearCart, refreshCartAuth]);
 
     return (
         <CartContext.Provider value={value}>

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Linking, SectionList } from 'react-native';
 import { getPatientRecordsAsDoctor, createPatientRecord } from '../../services/doctorService';
 import { FontAwesome5 } from '@expo/vector-icons';
 import dayjs from 'dayjs';
+import api, { SERVER_URL } from '../../services/api';
 
 interface Record {
     id: number;
@@ -15,6 +16,7 @@ interface Record {
 const PatientRecordsScreen = ({ route }: any) => {
     const { patient } = route.params; // Passed from DoctorPatientsListScreen
     const [records, setRecords] = useState<Record[]>([]);
+    const [patientReports, setPatientReports] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [isAdding, setIsAdding] = useState(false);
@@ -28,6 +30,14 @@ const PatientRecordsScreen = ({ route }: any) => {
             setLoading(true);
             const data = await getPatientRecordsAsDoctor(patient.id);
             setRecords(data);
+            // Also fetch uploaded medical reports
+            try {
+                const reportsRes = await api.get(`/reports/patient/${patient.id}`);
+                setPatientReports(reportsRes.data);
+            } catch (e) {
+                // Reports endpoint may 403 for non-doctors, ignore gracefully
+                setPatientReports([]);
+            }
         } catch (error) {
             console.error(error);
         } finally {
@@ -38,6 +48,11 @@ const PatientRecordsScreen = ({ route }: any) => {
     useEffect(() => {
         fetchRecords();
     }, []);
+
+    const handleViewReport = (filename: string) => {
+        const url = `${SERVER_URL}/uploads/reports/${filename}`;
+        Linking.openURL(url).catch(() => Alert.alert('Error', 'Could not open report.'));
+    };
 
     const handleSubmit = async () => {
         if (!diagnosis) {
@@ -139,18 +154,76 @@ const PatientRecordsScreen = ({ route }: any) => {
         <View style={styles.container}>
             {loading ? (
                 <View style={styles.center}><ActivityIndicator size="large" color="#2E7D32" /></View>
-            ) : records.length === 0 ? (
-                <View style={styles.center}>
-                    <FontAwesome5 name="file-medical" size={60} color="#ccc" />
-                    <Text style={styles.emptyText}>No previous records found for {patient.name}.</Text>
-                </View>
             ) : (
-                <FlatList
-                    data={records}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={renderItem}
-                    contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-                />
+                <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+                    {/* Patient Uploaded Medical Reports */}
+                    {patientReports.length > 0 && (
+                        <View style={styles.reportsSection}>
+                            <Text style={styles.reportsSectionTitle}>
+                                <FontAwesome5 name="file-medical-alt" size={16} color="#E65100" />  Uploaded Medical Reports
+                            </Text>
+                            {patientReports.map((report: any) => (
+                                <TouchableOpacity
+                                    key={report.reportid}
+                                    style={styles.reportItem}
+                                    onPress={() => handleViewReport(report.filename)}
+                                >
+                                    <View style={styles.reportIcon}>
+                                        <FontAwesome5
+                                            name={report.mimetype === 'application/pdf' ? 'file-pdf' : 'file-image'}
+                                            size={20}
+                                            color={report.mimetype === 'application/pdf' ? '#E53935' : '#1E88E5'}
+                                        />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.reportName} numberOfLines={1}>{report.originalname}</Text>
+                                        <Text style={styles.reportMeta}>
+                                            {(report.filesize / (1024 * 1024)).toFixed(1)} MB • {dayjs(report.uploadedat).format('DD MMM YYYY')}
+                                        </Text>
+                                    </View>
+                                    <FontAwesome5 name="external-link-alt" size={14} color="#999" />
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    )}
+
+                    {/* Doctor Records */}
+                    {records.length === 0 && patientReports.length === 0 ? (
+                        <View style={styles.center}>
+                            <FontAwesome5 name="file-medical" size={60} color="#ccc" />
+                            <Text style={styles.emptyText}>No previous records found for {patient.name}.</Text>
+                        </View>
+                    ) : (
+                        <>
+                            {records.length > 0 && (
+                                <Text style={styles.reportsSectionTitle}>
+                                    <FontAwesome5 name="notes-medical" size={16} color="#2E7D32" />  Doctor Notes
+                                </Text>
+                            )}
+                            {records.map((item) => (
+                                <View key={item.id} style={styles.card}>
+                                    <Text style={styles.date}>{dayjs(item.created_at).format('MMMM D, YYYY')}</Text>
+                                    <View style={styles.section}>
+                                        <Text style={styles.sectionTitle}>Diagnosis:</Text>
+                                        <Text style={styles.sectionText}>{item.diagnosis}</Text>
+                                    </View>
+                                    {item.prescription ? (
+                                        <View style={styles.section}>
+                                            <Text style={styles.sectionTitle}>Prescription:</Text>
+                                            <Text style={styles.sectionText}>{item.prescription}</Text>
+                                        </View>
+                                    ) : null}
+                                    {item.notes ? (
+                                        <View style={styles.section}>
+                                            <Text style={styles.sectionTitle}>Notes:</Text>
+                                            <Text style={styles.sectionText}>{item.notes}</Text>
+                                        </View>
+                                    ) : null}
+                                </View>
+                            ))}
+                        </>
+                    )}
+                </ScrollView>
             )}
 
             <TouchableOpacity style={styles.fab} onPress={() => setIsAdding(true)}>
@@ -223,6 +296,49 @@ const styles = StyleSheet.create({
         shadowColor: '#000',
         shadowOpacity: 0.3,
         shadowOffset: { width: 0, height: 2 },
+    },
+    // Reports Section
+    reportsSection: {
+        marginBottom: 20,
+    },
+    reportsSectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 12,
+    },
+    reportItem: {
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 12,
+        marginBottom: 8,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOpacity: 0.03,
+        shadowRadius: 3,
+        elevation: 1,
+        borderWidth: 1,
+        borderColor: '#f0f0f0',
+    },
+    reportIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 8,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    reportName: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#333',
+    },
+    reportMeta: {
+        fontSize: 12,
+        color: '#999',
+        marginTop: 2,
     },
     // Form Styles
     formContainer: {

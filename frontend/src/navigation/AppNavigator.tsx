@@ -8,18 +8,26 @@ import AdminHomeScreen from '../screens/AdminHomeScreen';
 import AdminMedicinesScreen from '../screens/AdminMedicinesScreen';
 import AdminAddMedicineScreen from '../screens/AdminAddMedicineScreen';
 import AdminEditMedicineScreen from '../screens/AdminEditMedicineScreen';
+import AdminStockAlertsScreen from '../screens/AdminStockAlertsScreen';
 import AdminDoctorListScreen from '../screens/AdminDoctorListScreen';
 import AdminAddDoctorScreen from '../screens/AdminAddDoctorScreen';
 import AdminEditDoctorScreen from '../screens/AdminEditDoctorScreen';
 import AdminUserListScreen from '../screens/AdminUserListScreen';
+import AdminManageOrdersScreen from '../screens/AdminManageOrdersScreen';
 import MedicineDetailsScreen from '../screens/MedicineDetailsScreen';
 import DoctorDetailsScreen from '../screens/DoctorDetailsScreen';
 import CartScreen from '../screens/CartScreen';
+import CheckoutScreen from '../screens/CheckoutScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import LoadingScreen from '../screens/LoadingScreen';
 import UserTabNavigator from './UserTabNavigator';
 import BookAppointmentScreen from '../screens/BookAppointmentScreen';
 import UserAppointmentsScreen from '../screens/UserAppointmentsScreen';
+import MyMedicinesScreen from '../screens/MyMedicinesScreen';
+import AddMedicineTrackerScreen from '../screens/AddMedicineTrackerScreen';
+import UserProfileScreen from '../screens/UserProfileScreen';
+import MyOrdersScreen from '../screens/MyOrdersScreen';
+import MyMedicalReportsScreen from '../screens/MyMedicalReportsScreen';
 
 // Doctor Screens
 import DoctorInsightsScreen from '../screens/doctor/DoctorInsightsScreen';
@@ -49,6 +57,12 @@ const AppNavigator = () => {
         name="AdminMedicines"
         component={AdminMedicinesScreen}
         options={{ title: 'Manage Medicines' }}
+      />
+      
+      <Stack.Screen
+        name="AdminStockAlerts"
+        component={AdminStockAlertsScreen}
+        options={{ headerShown: false }}
       />
 
       <Stack.Screen
@@ -80,11 +94,16 @@ const AppNavigator = () => {
         options={{ title: 'Edit Doctor' }}
       />
 
-      {/* Admin → Users */}
+      {/* Admin → Users & Orders */}
       <Stack.Screen
         name="AdminUsers"
         component={AdminUserListScreen}
         options={{ title: 'User Management' }}
+      />
+      <Stack.Screen
+        name="AdminManageOrders"
+        component={AdminManageOrdersScreen}
+        options={{ title: 'Manage Orders' }}
       />
 
       {/* User Features */}
@@ -104,6 +123,11 @@ const AppNavigator = () => {
         options={{ title: 'My Cart' }}
       />
       <Stack.Screen
+        name="Checkout"
+        component={CheckoutScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="BookAppointment"
         component={BookAppointmentScreen}
         options={{ headerShown: false }}
@@ -111,6 +135,31 @@ const AppNavigator = () => {
       <Stack.Screen
         name="UserAppointments"
         component={UserAppointmentsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="MyMedicines"
+        component={MyMedicinesScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AddMedicineTracker"
+        component={AddMedicineTrackerScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="UserProfile"
+        component={UserProfileScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="MyOrders"
+        component={MyOrdersScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="MyMedicalReports"
+        component={MyMedicalReportsScreen}
         options={{ headerShown: false }}
       />
 

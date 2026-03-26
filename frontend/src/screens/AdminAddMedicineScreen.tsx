@@ -258,7 +258,7 @@ const AdminAddMedicineScreen = ({ navigation }: { navigation: any }) => {
             <View className="flex-row justify-between">
               <View className="w-[48%]">
                 <PremiumInput
-                  label="Price (Rs.) *"
+                  label="Price (₹) *"
                   value={form.price}
                   onChangeText={v => updateField('price', v)}
                   onBlur={() => handleBlur('price')}

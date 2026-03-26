@@ -56,7 +56,10 @@ const CartScreen = ({ navigation }: { navigation: any }) => {
                 );
                 return;
             }
-            Alert.alert('Checkout System', 'Implementing Payment Gateway soon!');
+            
+            // Navigate to the new Checkout Screen
+            navigation.navigate('Checkout');
+            
         } catch (error) {
             console.error(error);
         }
@@ -125,16 +128,19 @@ const CartScreen = ({ navigation }: { navigation: any }) => {
                 contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
-                    <View className="items-center mt-20">
-                        <View className="w-20 h-20 bg-[#E0F2F1] rounded-full items-center justify-center mb-4">
-                            <FontAwesome5 name="shopping-basket" size={32} color="#4DB6AC" />
+                    <View className="items-center mt-20 px-10">
+                        <View className="w-24 h-24 bg-[#E0F2F1] rounded-full items-center justify-center mb-6 shadow-sm">
+                            <FontAwesome5 name="shopping-basket" size={40} color="#00695C" />
                         </View>
-                        <Text className="text-lg text-[#90A4AE] font-medium">Your cart is empty.</Text>
+                        <Text className="text-xl font-bold text-[#37474F] mb-2 text-center">Your cart is empty</Text>
+                        <Text className="text-[#78909C] text-center leading-5 mb-8">
+                            Looks like you haven't added any medicines to your cart yet. Start exploring our store to find what you need!
+                        </Text>
                         <TouchableOpacity
-                            className="mt-6 bg-[#00695C] px-6 py-3 rounded-full"
-                            onPress={() => navigation.navigate('User', { screen: 'Store' })} // Start Shopping
+                            className="bg-[#00695C] px-8 py-4 rounded-2xl shadow-md active:opacity-90 w-full"
+                            onPress={() => navigation.navigate('User', { screen: 'Store' })}
                         >
-                            <Text className="text-white font-bold">Start Shopping</Text>
+                            <Text className="text-white font-bold text-center text-base">Browse Medicines</Text>
                         </TouchableOpacity>
                     </View>
                 }

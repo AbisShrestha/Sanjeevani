@@ -34,17 +34,22 @@ INSTRUCTIONS:
 `;
 
 const getChatResponse = async (req, res) => {
+    // 1. Setup SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders(); // Tell client to keep connection open
+
     try {
         const { message } = req.body;
 
         if (!message) {
-            return res.status(400).json({ error: "Message is required" });
+            res.write(`data: ${JSON.stringify({ error: "Message is required" })}\n\n`);
+            return res.end();
         }
-
 
         /* Real AI Logic */
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        // Using 'gemini-2.5-flash' based on successful test verification
         const model = genAI.getGenerativeModel({
             model: "gemini-2.5-flash",
             systemInstruction: SYSTEM_INSTRUCTION
@@ -57,14 +62,35 @@ const getChatResponse = async (req, res) => {
             ],
         });
 
-        const result = await chat.sendMessage(message);
-        const response = await result.response;
-        res.json({ reply: response.text() });
-
+        // 2. Stream generation
+        const result = await chat.sendMessageStream(message);
+        
+        for await (const chunk of result.stream) {
+            const chunkText = chunk.text();
+            if (chunkText) {
+                // Formatting payload as SSE event
+                res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+            }
+        }
+        
     } catch (error) {
         console.warn("Gemini API Failed. Switching to Advanced Fallback Mode.", error.message);
-        const fallbackReply = getFallbackResponse(req.body.message);
-        res.json({ reply: fallbackReply });
+        try {
+            const fallbackReply = getFallbackResponse(req.body.message);
+            
+            // To maintain a nice UX, stream the fallback message artificially by splitting by spaces or sentences
+            const words = fallbackReply.split(/(?<=\s)/); // Split keeping the spaces
+            
+            for (const word of words) {
+                res.write(`data: ${JSON.stringify({ text: word })}\n\n`);
+                // Simulate network/typing delay
+                await new Promise(resolve => setTimeout(resolve, 30));
+            }
+        } catch (fbError) {
+             res.write(`data: ${JSON.stringify({ error: "An unexpected error occurred." })}\n\n`);
+        }
+    } finally {
+        res.end(); // Finish SSE connection
     }
 };
 

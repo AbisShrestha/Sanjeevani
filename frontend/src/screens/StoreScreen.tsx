@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
     View,
     Text,
@@ -75,7 +75,7 @@ const MedicineItem = React.memo(({ item, viewMode, onNavigate, onAddToCart }: an
                 <Image
                     source={{ uri: imageUrl }}
                     style={styles.gridImage}
-                    resizeMode="cover"
+                    resizeMode="contain"
                 />
                 <View>
                     <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
@@ -114,7 +114,7 @@ const MedicineItem = React.memo(({ item, viewMode, onNavigate, onAddToCart }: an
                     </Text>
                 </View>
                 <View style={styles.listFooter}>
-                    <Text style={styles.itemPrice}>Rs. {item.price}</Text>
+                    <Text style={styles.itemPrice}>₹ {item.price}</Text>
                     <Pressable
                         style={styles.addToCartButton}
                         onPress={() => onAddToCart(item)}
@@ -138,76 +138,58 @@ const SanjeevaniStoreScreen = (props: any) => {
     const [filteredMedicines, setFilteredMedicines] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [searchText, setSearchText] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [sortBy, setSortBy] = useState<'none' | 'lowHigh' | 'highLow'>('none');
+    const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Fetch Data
-    const fetchMedicines = useCallback(async () => {
+    // Fetch Data from Server (with search/filter/sort query params)
+    const fetchMedicines = useCallback(async (params?: {
+        search?: string;
+        category?: string;
+        sort?: string;
+    }) => {
         try {
-            console.log("[StoreScreen] Fetching medicines...");
-            const data = await getAllMedicines();
+
+            const data = await getAllMedicines(params);
             const validData = Array.isArray(data)
                 ? data.filter(item => item && typeof item === 'object' && item.medicineid)
                 : [];
-            setMedicines(validData);
+            
+            // If no filters, also update the main medicines list (for category tabs)
+            if (!params || (!params.search && !params.category && !params.sort)) {
+                setMedicines(validData);
+            }
+            setFilteredMedicines(validData);
         } catch (error) {
             console.error('[StoreScreen] Failed to fetch medicines', error);
-            setMedicines([]);
+            setFilteredMedicines([]);
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
     }, []);
 
+    // Initial load (all medicines)
     useEffect(() => {
         fetchMedicines();
     }, [fetchMedicines]);
 
-    // Filtering Logic
-    const filterAndSortMedicines = useCallback(() => {
-        try {
-            console.log(`[StoreScreen] Filtering. Category: ${selectedCategory}, Search: ${searchText}`);
-            let result = medicines.filter(m => m && typeof m === 'object' && m.name && m.medicineid);
-
-            // Search
-            if (searchText) {
-                const lower = searchText.toLowerCase();
-                result = result.filter(
-                    (m) =>
-                        (m.name && m.name.toLowerCase().includes(lower)) ||
-                        (m.description && m.description.toLowerCase().includes(lower))
-                );
-            }
-
-            // Category
-            if (selectedCategory !== 'All') {
-                const selected = String(selectedCategory).toLowerCase();
-                result = result.filter((m) => {
-                    const catName = m.categoryname ? String(m.categoryname).toLowerCase() : '';
-                    return catName === selected || catName.includes(selected);
-                });
-            }
-
-            // Sort
-            if (sortBy === 'lowHigh') {
-                result.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
-            } else if (sortBy === 'highLow') {
-                result.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
-            }
-
-            console.log(`[StoreScreen] Filtered count: ${result.length}`);
-            setFilteredMedicines(result);
-        } catch (error) {
-            console.error("[StoreScreen] Filter error:", error);
-            setFilteredMedicines([]);
-        }
-    }, [medicines, searchText, selectedCategory, sortBy]);
-
+    // Server-Side Search with debounce (300ms)
     useEffect(() => {
-        filterAndSortMedicines();
-    }, [filterAndSortMedicines]);
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        
+        debounceTimer.current = setTimeout(() => {
+            fetchMedicines({
+                category: selectedCategory,
+                sort: sortBy,
+            });
+        }, 300);
+
+        return () => {
+            if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        };
+    }, [selectedCategory, sortBy]);
 
     // Derived Categories
     const derivedCategories = useMemo(() => {
@@ -271,20 +253,7 @@ const SanjeevaniStoreScreen = (props: any) => {
                 </Pressable>
             </View>
 
-            {/* SEARCH & FILTERS */}
-            <View className="bg-white pb-2.5 border-b border-[#eee] shadow-sm z-10">
-                <View className="flex-row items-center bg-[#F5F7FA] mx-[15px] mt-[15px] mb-2.5 px-[15px] rounded-xl h-[45px]">
-                    <FontAwesome5 name="search" size={16} color="#999" />
-                    <TextInput
-                        className="flex-1 ml-2.5 text-base text-[#333]"
-                        placeholder="Search medicines..."
-                        value={searchText}
-                        onChangeText={setSearchText}
-                        autoCapitalize="none"
-                        placeholderTextColor="#999"
-                    />
-                </View>
-
+            <View className="bg-white pb-2.5 border-b border-[#eee] shadow-sm z-10 pt-4">
                 {/* HORIZONTAL CATEGORIES - FIX: USING RAW STYLES TO AVOID NATIVEWIND CRASH */}
                 <View className="flex-row items-center pl-[15px]">
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-1">
@@ -345,9 +314,14 @@ const SanjeevaniStoreScreen = (props: any) => {
                 }
             >
                 {filteredMedicines.length === 0 ? (
-                    <View className="items-center mt-[60px]">
-                        <FontAwesome5 name="leaf" size={50} color="#ccc" />
-                        <Text className="mt-[15px] text-base text-[#999]">No medicines found.</Text>
+                    <View className="items-center mt-[80px] px-10">
+                        <View className="w-24 h-24 bg-[#E0F2F1] rounded-full items-center justify-center mb-6 shadow-sm">
+                            <FontAwesome5 name="leaf" size={40} color="#00695C" />
+                        </View>
+                        <Text className="text-xl font-bold text-[#37474F] mb-2 text-center">No medicines found</Text>
+                        <Text className="text-[#78909C] text-center leading-5 mb-8">
+                            We couldn't find any products in this category at the moment. Try selecting another one!
+                        </Text>
                     </View>
                 ) : (
                     <View className={`flex-row flex-wrap ${viewMode === 'grid' ? 'justify-between' : ''}`}>
@@ -417,7 +391,7 @@ const styles = StyleSheet.create({
     },
     gridImage: {
         width: '100%',
-        height: 120,
+        height: 160,
         borderRadius: 8,
         marginBottom: 10,
         backgroundColor: '#f0f0f0',
@@ -446,15 +420,18 @@ const styles = StyleSheet.create({
         color: '#2E7D32',
     },
     addButton: {
-        backgroundColor: '#E0F2F1',
+        backgroundColor: '#00695C',
         paddingVertical: 6,
         borderRadius: 8,
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#B2DFDB',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
     },
     addButtonText: {
-        color: '#00796B',
+        color: '#fff',
         fontWeight: 'bold',
         fontSize: 11,
     },
@@ -474,15 +451,15 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     listImage: {
-        width: 100,
-        height: 100,
+        width: 110,
+        height: 110,
         borderRadius: 12,
         backgroundColor: '#f0f0f0',
     },
     listContent: {
         flex: 1,
         marginLeft: 15,
-        height: 100,
+        height: 110,
         justifyContent: 'space-between',
     },
     itemDescription: {
@@ -502,6 +479,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 8,
+        alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,

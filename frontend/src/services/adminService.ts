@@ -33,7 +33,12 @@ export const deactivateUser = async (userId: number) => {
  */
 
 export const getAllOrders = async () => {
-  const response = await api.get('/admin/orders');
+  const response = await api.get('/orders');
+  return response.data;
+};
+
+export const updateOrderStatus = async (orderId: number, status: string) => {
+  const response = await api.put(`/orders/${orderId}/status`, { status });
   return response.data;
 };
 

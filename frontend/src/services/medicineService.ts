@@ -19,11 +19,28 @@ export interface AddMedicinePayload {
 }
 
 /* 
-   GET ALL MEDICINES
-   Ask the server for the full list of medicines to show in the app.
+   GET ALL MEDICINES (with optional server-side search)
+   Supports query params: search, category, sort
  */
-export const getAllMedicines = async () => {
-  const response = await api.get('/medicines');
+export const getAllMedicines = async (params?: {
+  search?: string;
+  category?: string;
+  sort?: string;
+}) => {
+  const queryParams = new URLSearchParams();
+  
+  if (params?.search) queryParams.append('search', params.search);
+  if (params?.category && params.category.toLowerCase() !== 'all') {
+    queryParams.append('category', params.category);
+  }
+  if (params?.sort && params.sort !== 'none') {
+    queryParams.append('sort', params.sort);
+  }
+  
+  const queryString = queryParams.toString();
+  const url = queryString ? `/medicines?${queryString}` : '/medicines';
+  
+  const response = await api.get(url);
   return response.data;
 };
 
@@ -54,5 +71,13 @@ export const updateMedicine = async (
   data: Partial<AddMedicinePayload>
 ) => {
   const response = await api.put(`/medicines/${medicineId}`, data);
+  return response.data;
+};
+
+/* 
+   GET LOW STOCK MEDICINES (ADMIN)
+ */
+export const getLowStockMedicines = async () => {
+  const response = await api.get('/medicines/admin/low-stock');
   return response.data;
 };

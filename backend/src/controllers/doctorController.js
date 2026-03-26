@@ -63,22 +63,24 @@ const getAllDoctors = async (req, res) => {
         // 2. Fetch from 'users' table where role is 'doctor'
         const userDoctors = await userModel.getAllDoctors();
 
-        // 3. Convert User-Doctors to Doctor format (if not already in doctors table check by name?)
-        // For simplicity, we show them as "Unverified" or defaults if they are just users.
-        const formattedUserDoctors = userDoctors.map(user => ({
-            id: `u-${user.userid}`, // string ID to prevent collision
-            name: user.fullname,
-            specialty: 'Ayurvedic Practitioner', // Default
-            qualification: 'Verified User',
-            experience: 'Unknown',
-            image: null,
-            rating: 5.0,
-            is_available: user.isactive,
-            source: 'user_db'
-        }));
+        // 3. Convert User-Doctors to Doctor format, avoiding those already in the explicit 'doctors' table
+        const existingNames = new Set(doctors.map(d => d.name.toLowerCase()));
+        
+        const formattedUserDoctors = userDoctors
+            .filter(user => !existingNames.has(user.fullname.toLowerCase()))
+            .map(user => ({
+                id: `u-${user.userid}`, 
+                name: user.fullname,
+                specialty: 'Ayurvedic Practitioner',
+                qualification: 'Verified User',
+                experience: 'Unknown',
+                image: null,
+                rating: 5.0,
+                is_available: user.isactive,
+                source: 'user_db'
+            }));
 
-        // 4. Merge (Avoid duplicates if possible, but for now just concat)
-        // A better logic would be to cross-check names, but let's show all for visibility.
+        // 4. Merge
         const allDoctors = [...doctors, ...formattedUserDoctors];
 
         res.json(allDoctors);

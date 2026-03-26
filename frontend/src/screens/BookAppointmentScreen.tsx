@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image, Platform, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image, Platform, ScrollView, Modal } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { bookAppointment } from '../services/doctorService';
 import { buildImageUri } from '../utils/image';
+import { initiateEsewaPayment, generateEsewaFormHTML, verifyEsewaPayment } from '../services/esewaService';
+import { WebView } from 'react-native-webview';
 
 const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: any }) => {
     const { doctor } = route.params;
@@ -12,6 +14,7 @@ const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: 
     const [selectedTime, setSelectedTime] = useState('10:00 AM');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [step, setStep] = useState(1); // 1 = Pick Time, 2 = Payment
+    const [esewaHtmlConfig, setEsewaHtmlConfig] = useState<string | null>(null);
 
     const timeSlots = ['10:00 AM', '11:00 AM', '01:00 PM', '02:00 PM', '04:00 PM', '05:00 PM'];
 
@@ -26,27 +29,80 @@ const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: 
         try {
             setIsSubmitting(true);
 
-            // Format the final selected date/time to send to backend
-            const dateStr = selectedDate.format('YYYY-MM-DD');
-            const appointmentDate = dayjs(`${dateStr} ${selectedTime}`, 'YYYY-MM-DD hh:mm A').toISOString();
-
-            await bookAppointment(doctor.id, appointmentDate, 'General Consultation');
-
-            setIsSubmitting(false);
-
-            Alert.alert(
-                'Payment Successful!',
-                'Your appointment has been booked. You can find the video call link in your Appointments tab.',
-                [
-                    { text: 'View Appointments', onPress: () => navigation.navigate('UserAppointments') },
-                    { text: 'Go Home', onPress: () => navigation.navigate('Home') }
-                ]
+            // 1. Initiate eSewa Payment
+            const purchaseId = `APT-${doctor.id}-${Date.now()}`;
+            const fee = doctor.fee ? Number(doctor.fee) : 500;
+            
+            const esewaResponse = await initiateEsewaPayment(
+                 fee,
+                 purchaseId,
+                 `Consultation with Dr. ${doctor.name}`
             );
+                 
+            // 2. Open eSewa Payment Gateway in WebView Modal
+            if (esewaResponse && esewaResponse.paymentUrl) {
+                 const formHTML = generateEsewaFormHTML(esewaResponse.paymentUrl, esewaResponse.paymentData);
+                 setEsewaHtmlConfig(formHTML);
+            }
 
         } catch (error) {
-            console.error('Booking failed:', error);
+            console.error('eSewa Payment initiation failed:', error);
+            Alert.alert('Error', 'Failed to connect to eSewa. Please try again.');
+        } finally {
             setIsSubmitting(false);
-            Alert.alert('Error', 'Failed to book appointment. Please try again.');
+        }
+    };
+
+    const handleNavigationStateChange = async (navState: any) => {
+        const { url } = navState;
+
+        if (url.includes('sanjeevani-health.com/payment/success')) {
+            setEsewaHtmlConfig(null);
+            setIsSubmitting(true);
+            
+            try {
+                const urlObj = new URL(url);
+                const encodedData = urlObj.searchParams.get('data');
+                
+                if (encodedData) {
+                    await verifyEsewaPayment(encodedData);
+                    
+                    // Parse Date safely
+                    const dateStr = selectedDate.format('YYYY-MM-DD');
+                    const [timePart, modifier] = selectedTime.split(' ');
+                    const [hoursStr, minutesStr] = timePart.split(':');
+                    
+                    let hours = parseInt(hoursStr, 10);
+                    const minutes = parseInt(minutesStr, 10);
+                    
+                    if (modifier === 'PM' && hours !== 12) hours += 12;
+                    if (modifier === 'AM' && hours === 12) hours = 0;
+                    
+                    const appointmentDate = dayjs(dateStr).hour(hours).minute(minutes).second(0).toISOString();
+
+                    await bookAppointment(doctor.id, appointmentDate, 'General Consultation');
+
+                    Alert.alert(
+                        'Booking Confirmed! 🎉',
+                        'Your appointment has been booked. You can find the video call link in your Appointments tab.',
+                        [
+                            { text: 'View Appointments', onPress: () => navigation.navigate('UserAppointments') },
+                            { text: 'Go Home', onPress: () => navigation.navigate('Home') }
+                        ]
+                    );
+
+                } else {
+                    throw new Error("Missing verification data");
+                }
+            } catch (error) {
+                console.error('Booking failed:', error);
+                Alert.alert('Payment Failed', 'We could not verify your payment or book the appointment.');
+            } finally {
+                setIsSubmitting(false);
+            }
+        } else if (url.includes('sanjeevani-health.com/payment/failure') || url.includes('/cancel')) {
+            setEsewaHtmlConfig(null);
+            Alert.alert('Payment Cancelled', 'Your eSewa payment was not completed.');
         }
     };
 
@@ -139,8 +195,8 @@ const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: 
 
                         <Text style={[styles.sectionTitle, { marginTop: 30 }]}>Payment Method</Text>
                         <View style={[styles.paymentMethod, styles.paymentMethodActive]}>
-                            <FontAwesome5 name="wallet" size={24} color="#00695C" />
-                            <Text style={styles.paymentMethodText}>Sanjeevani Wallet</Text>
+                            <FontAwesome5 name="wallet" size={24} color="#60BB46" />
+                            <Text style={styles.paymentMethodText}>Pay via eSewa</Text>
                             <FontAwesome5 name="check-circle" size={20} color="#00695C" style={{ marginLeft: 'auto' }} />
                         </View>
                         <View style={styles.paymentMethod}>
@@ -171,6 +227,31 @@ const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: 
                     </TouchableOpacity>
                 )}
             </View>
+
+            {/* Embedded eSewa WebView Modal */}
+            <Modal visible={!!esewaHtmlConfig} animationType="slide" onRequestClose={() => setEsewaHtmlConfig(null)}>
+                <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 40 : 0 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f0f0f0' }}>
+                        <TouchableOpacity onPress={() => setEsewaHtmlConfig(null)} style={{ padding: 8, marginLeft: -8, marginRight: 8 }}>
+                            <FontAwesome5 name="times" size={20} color="#333" />
+                        </TouchableOpacity>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Secure eSewa Payment</Text>
+                    </View>
+                    {esewaHtmlConfig && (
+                        <WebView
+                            source={{ html: esewaHtmlConfig }}
+                            onNavigationStateChange={handleNavigationStateChange}
+                            style={{ flex: 1 }}
+                            startInLoadingState={true}
+                            renderLoading={() => (
+                                <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', zIndex: 10 }}>
+                                    <ActivityIndicator size="large" color="#60BB46" />
+                                </View>
+                            )}
+                        />
+                    )}
+                </View>
+            </Modal>
         </View>
     );
 };

@@ -6,8 +6,19 @@ const adminRoutes = require('./adminRoutes');
 const medicineRoutes = require('./medicineRoutes');
 const categoryRoutes = require('./categoryRoutes');
 const chatRoutes = require('./chatRoutes');
+const esewaRoutes = require('./esewaRoutes');
+const orderRoutes = require('./orderRoutes');
 const doctorRoutes = require('./doctorRoutes');
 const doctorFeaturesRoutes = require('./doctorFeaturesRoutes');
+const reportRoutes = require('./reportRoutes');
+let profileRoutes;
+try {
+  profileRoutes = require('./profileRoutes');
+  console.log('[Routes] profileRoutes loaded successfully');
+} catch (err) {
+  console.error('[Routes] FAILED to load profileRoutes:', err.message);
+  profileRoutes = express.Router(); // fallback empty router
+}
 
 /* 
    API ROUTES
@@ -16,9 +27,18 @@ router.use('/auth', authRoutes);
 router.use('/admin', adminRoutes);
 router.use('/medicines', medicineRoutes);
 router.use('/categories', categoryRoutes);
-router.use('/chat', chatRoutes); // [NEW]
+router.use('/chat', chatRoutes);
+router.use('/esewa', esewaRoutes);
+router.use('/orders', orderRoutes);
 router.use('/doctors', doctorRoutes);
 router.use('/doctor-features', doctorFeaturesRoutes);
+router.use('/profile', profileRoutes);
+router.use('/reports', reportRoutes);
+
+// Debug: test profile route is mounted
+router.get('/profile-test', (req, res) => {
+  res.json({ message: 'Profile route mount point is reachable', hasProfileRoutes: !!profileRoutes });
+});
 
 /* 
    API HEALTH CHECK

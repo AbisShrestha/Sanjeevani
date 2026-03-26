@@ -40,7 +40,17 @@ app.use('/api', routes);
    HEALTH CHECK / TEST
  */
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'Sanjeevani API running' });
+  res.status(200).json({ status: 'UP', message: 'Sanjeevani Backend is healthy!' });
+});
+/* 
+   GLOBAL ERROR HANDLER (Should be last)
+ */
+app.use((err, req, res, next) => {
+  console.error(`[ERROR] ${req.method} ${req.url}`, err);
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal Server Error',
+    error: process.env.NODE_ENV === 'production' ? {} : err
+  });
 });
 
 module.exports = app;

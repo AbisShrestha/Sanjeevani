@@ -12,7 +12,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useCart } from '../context/CartContext';
-import { SERVER_URL } from '../services/api';
+import { buildImageUri } from '../utils/image';
 
 const MedicineDetailsScreen = ({ navigation, route }: { navigation: any; route: any }) => {
     // Check route params
@@ -28,18 +28,7 @@ const MedicineDetailsScreen = ({ navigation, route }: { navigation: any; route: 
     const { addToCart: addToCartContext } = useCart();
     const [adding, setAdding] = useState(false);
 
-    // FIX: Robust Image URL Logic (Same as StoreScreen)
-    const imageUrl = useMemo(() => {
-        if (!medicine.imageurl) return 'https://via.placeholder.com/300?text=No+Image';
-        if (medicine.imageurl.startsWith('http')) return medicine.imageurl;
-
-        let path = medicine.imageurl.replace(/\\/g, '/');
-        if (path.includes('uploads/')) path = path.substring(path.indexOf('uploads/'));
-        else if (!path.startsWith('uploads/')) path = `uploads/${path}`;
-        if (path.startsWith('/')) path = path.substring(1);
-
-        return `${SERVER_URL}/${path}`;
-    }, [medicine.imageurl]);
+    const imageUrl = buildImageUri(medicine.imageurl, 'https://via.placeholder.com/300?text=No+Image');
 
     const addToCart = async () => {
         setAdding(true);
@@ -165,42 +154,26 @@ const MedicineDetailsScreen = ({ navigation, route }: { navigation: any; route: 
                 </View>
             </ScrollView>
 
-            {/* Sticky Bottom Button */}
-            <View style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                backgroundColor: '#fff',
-                padding: 20,
-                borderTopWidth: 1,
-                borderTopColor: '#f0f0f0',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: -4 },
-                shadowOpacity: 0.05,
-                shadowRadius: 4,
-                elevation: 10
-            }}>
-                <TouchableOpacity
-                    style={{
-                        backgroundColor: '#00695C',
-                        paddingVertical: 16,
-                        borderRadius: 16,
-                        alignItems: 'center',
-                        shadowColor: '#00695C',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 4,
-                        elevation: 4,
-                        opacity: adding ? 0.8 : 1
-                    }}
-                    onPress={addToCart}
-                    disabled={adding}
-                >
-                    <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 0.5 }}>
-                        {adding ? 'Adding...' : 'Add to Cart'}
-                    </Text>
-                </TouchableOpacity>
+            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', padding: 20, borderTopWidth: 1, borderTopColor: '#f0f0f0', shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 10 }}>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <TouchableOpacity
+                        style={{ flex: 1, backgroundColor: '#7B1FA2', paddingVertical: 16, borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}
+                        onPress={() => navigation.navigate('AddMedicineTracker', { medicine })}
+                        activeOpacity={0.8}
+                    >
+                        <FontAwesome5 name="bell" size={16} color="#fff" />
+                        <Text style={{ color: '#fff', fontSize: 14, fontWeight: 'bold', marginLeft: 8 }}>Track</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={{ flex: 2, backgroundColor: '#00695C', paddingVertical: 16, borderRadius: 16, alignItems: 'center', opacity: adding ? 0.8 : 1 }}
+                        onPress={addToCart}
+                        disabled={adding}
+                    >
+                        <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 0.5 }}>
+                            {adding ? 'Adding...' : 'Add to Cart'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </View>
     );

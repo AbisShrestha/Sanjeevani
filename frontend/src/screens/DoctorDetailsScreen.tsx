@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { buildImageUri } from '../utils/image';
 
 const DoctorDetailsScreen = ({ navigation, route }: { navigation: any; route: any }) => {
@@ -18,7 +19,19 @@ const DoctorDetailsScreen = ({ navigation, route }: { navigation: any; route: an
     const { doctor } = route.params;
     const displayImage = buildImageUri(doctor?.image, 'https://via.placeholder.com/150');
 
-    const handleBook = () => {
+    const handleBook = async () => {
+        const token = await AsyncStorage.getItem('token');
+        if (!token) {
+            Alert.alert(
+                'Login Required',
+                'You must be logged in to book an appointment.',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Login', onPress: () => navigation.navigate('Login') }
+                ]
+            );
+            return;
+        }
         navigation.navigate('BookAppointment', { doctor });
     };
 

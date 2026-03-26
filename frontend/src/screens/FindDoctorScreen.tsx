@@ -15,14 +15,13 @@ import { useNavigation } from '@react-navigation/native';
 import api from '../services/api';
 import { buildImageUri } from '../utils/image';
 
-const CATEGORIES = ['All', 'General', 'Cardiologist', 'Dermatologist', 'Ayurveda', 'Homoeopathy'];
+const CATEGORIES = ['All', 'General', 'Skin Specialist', 'Bones & Joints', 'Digestive', "Women's Health", 'Panchakarma'];
 
 const FindDoctorScreen = ({ navigation }: { navigation: any }) => {
     // Using props instead of useNavigation hook
     const [doctors, setDoctors] = useState<any[]>([]);
     const [filteredDoctors, setFilteredDoctors] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchText, setSearchText] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [refreshing, setRefreshing] = useState(false);
 
@@ -35,7 +34,7 @@ const FindDoctorScreen = ({ navigation }: { navigation: any }) => {
         fetchDoctors();
     }, []);
 
-    // Filter when search text or category changes
+    // Filter when category changes
     useEffect(() => {
         let result = doctors;
 
@@ -46,18 +45,8 @@ const FindDoctorScreen = ({ navigation }: { navigation: any }) => {
             );
         }
 
-        // Filter by Search Text
-        if (searchText) {
-            const lower = searchText.toLowerCase();
-            result = result.filter(doc =>
-                (doc.name && doc.name.toLowerCase().includes(lower)) ||
-                (doc.specialty && doc.specialty.toLowerCase().includes(lower)) ||
-                (doc.hospital && doc.hospital.toLowerCase().includes(lower))
-            );
-        }
-
         setFilteredDoctors(result);
-    }, [searchText, selectedCategory, doctors]);
+    }, [selectedCategory, doctors]);
 
     const fetchDoctors = async () => {
         try {
@@ -110,20 +99,7 @@ const FindDoctorScreen = ({ navigation }: { navigation: any }) => {
                 <Text className="text-xl font-bold text-[#37474F] ml-4">Find A Doctor</Text>
             </View>
 
-            <View className="px-4">
-                {/* Search Bar */}
-                <View className="bg-white flex-row items-center px-4 rounded-xl h-[50px] mb-4 shadow-sm border border-[#E0E0E0]">
-                    <FontAwesome5 name="search" size={16} color="#999" />
-                    <TextInput
-                        placeholder="Search doctors, specialties..."
-                        className="flex-1 ml-3 text-base text-[#333] h-full"
-                        value={searchText}
-                        onChangeText={setSearchText}
-                        placeholderTextColor="#999"
-                        autoCapitalize="none"
-                    />
-                </View>
-
+            <View className="px-4 pt-4">
                 {/* Categories */}
                 <View className="h-[45px] mb-2">
                     <FlatList
@@ -162,13 +138,13 @@ const FindDoctorScreen = ({ navigation }: { navigation: any }) => {
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#00695C']} />
                     }
                     ListEmptyComponent={
-                        <View className="flex-1 justify-center items-center mt-12">
-                            <View className="w-20 h-20 bg-[#E0F2F1] rounded-full items-center justify-center mb-5">
+                        <View className="flex-1 justify-center items-center mt-12 px-10">
+                            <View className="w-24 h-24 bg-[#E0F2F1] rounded-full items-center justify-center mb-6 shadow-sm">
                                 <FontAwesome5 name="user-md" size={40} color="#00695C" />
                             </View>
-                            <Text className="text-xl font-bold text-[#333] mb-2">No Doctors Found</Text>
-                            <Text className="text-sm text-[#777] text-center leading-5">
-                                Try adjusting your search or category.
+                            <Text className="text-xl font-bold text-[#37474F] mb-2 text-center">No Doctors Found</Text>
+                            <Text className="text-[#78909C] text-center leading-5 mb-8">
+                                We couldn't find any experts in this category. Try selecting another Ayurvedic specialty!
                             </Text>
                         </View>
                     }

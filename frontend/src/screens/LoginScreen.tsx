@@ -17,6 +17,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 
 import { loginUser } from '../services/authService';
 import { setAuthToken, BASE_URL } from '../services/api';
+import { useCart } from '../context/CartContext';
 
 const LoginScreen = ({ navigation }: { navigation: any }) => {
   // Using props instead of useNavigation hook to avoid context timing issues
@@ -24,6 +25,7 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const { refreshCartAuth } = useCart();
 
   /* 
      LOGIN HANDLER
@@ -46,6 +48,9 @@ const LoginScreen = ({ navigation }: { navigation: any }) => {
 
       //  IMPORTANT: sync Axios token immediately
       setAuthToken(response.token);
+      
+      // Refresh Cart to drop Guest Cart and load User Cart
+      await refreshCartAuth();
 
       // Navigate based on role
       const role = response.user.role;

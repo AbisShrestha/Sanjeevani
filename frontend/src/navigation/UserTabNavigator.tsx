@@ -104,7 +104,7 @@ const UserTabNavigator = ({ navigation }: { navigation: any }) => {
                 }}
                 options={{
                     tabBarIcon: () => (
-                        <View className="w-[50px] h-[50px] rounded-full bg-[#00695C] justify-center items-center mb-5 shadow-lg">
+                        <View className="w-[50px] h-[50px] rounded-full bg-[#00695C] justify-center items-center mb-8 shadow-lg">
                             <FontAwesome5 name="robot" color="#fff" size={24} />
                         </View>
                     ),

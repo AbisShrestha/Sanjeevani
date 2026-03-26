@@ -55,15 +55,32 @@ const DoctorAppointmentsScreen = () => {
 
     const renderItem = ({ item }: { item: Appointment }) => {
         const isPast = dayjs(item.appointment_date).isBefore(dayjs());
-        const isPending = item.status === 'pending';
-        const isConfirmed = item.status === 'confirmed';
+        const isToday = dayjs(item.appointment_date).isSame(dayjs(), 'day');
+        // Backend uses: 'scheduled' (default/confirmed), 'completed', 'cancelled'
+        const isScheduled = item.status === 'scheduled' || item.status === 'confirmed';
+        const isCompleted = item.status === 'completed';
+        const isCancelled = item.status === 'cancelled';
+
+        // Determine display status
+        let displayStatus = item.status.toUpperCase();
+        let statusStyle = styles.statusPending;
+        if (isScheduled) {
+            displayStatus = 'CONFIRMED';
+            statusStyle = styles.statusConfirmed;
+        } else if (isCompleted) {
+            displayStatus = 'COMPLETED';
+            statusStyle = styles.statusConfirmed;
+        } else if (isCancelled) {
+            displayStatus = 'CANCELLED';
+            statusStyle = styles.statusPending;
+        }
 
         return (
             <View style={styles.card}>
                 <View style={styles.cardHeader}>
                     <Text style={styles.patientName}>{item.patient_name}</Text>
-                    <View style={[styles.statusBadge, item.status === 'confirmed' ? styles.statusConfirmed : styles.statusPending]}>
-                        <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
+                    <View style={[styles.statusBadge, statusStyle]}>
+                        <Text style={styles.statusText}>{displayStatus}</Text>
                     </View>
                 </View>
 
@@ -78,26 +95,23 @@ const DoctorAppointmentsScreen = () => {
                 ) : null}
 
                 <View style={styles.actionRow}>
-                    {isPending && (
-                        <TouchableOpacity style={styles.confirmBtn} onPress={() => handleUpdateStatus(item.id, 'confirmed')}>
-                            <Text style={styles.actionBtnText}>Confirm</Text>
-                        </TouchableOpacity>
-                    )}
-
-                    {isConfirmed && (
+                    {/* Show "Join Call" if confirmed/scheduled and appointment is today or upcoming */}
+                    {isScheduled && (!isPast || isToday) && (
                         <TouchableOpacity style={styles.joinBtn} onPress={() => handleJoinCall(item.jitsi_link)}>
                             <FontAwesome5 name="video" size={14} color="#fff" />
                             <Text style={[styles.actionBtnText, { marginLeft: 6 }]}>Join Call</Text>
                         </TouchableOpacity>
                     )}
 
-                    {isConfirmed && isPast && (
+                    {/* Show "Mark Completed" if it's past and still scheduled */}
+                    {isScheduled && isPast && (
                         <TouchableOpacity style={styles.completeBtn} onPress={() => handleUpdateStatus(item.id, 'completed')}>
                             <Text style={styles.actionBtnText}>Mark Completed</Text>
                         </TouchableOpacity>
                     )}
 
-                    {(isPending || isConfirmed) && (
+                    {/* Show "Cancel" if scheduled (not completed or already cancelled) */}
+                    {isScheduled && (
                         <TouchableOpacity style={styles.cancelBtn} onPress={() => handleUpdateStatus(item.id, 'cancelled')}>
                             <Text style={[styles.actionBtnText, { color: '#d32f2f' }]}>Cancel</Text>
                         </TouchableOpacity>

@@ -16,11 +16,14 @@ const createUserTable = async () => {
       phone VARCHAR(20),
       role VARCHAR(50) DEFAULT 'user',
       isActive BOOLEAN DEFAULT TRUE,
+      profileimage VARCHAR(500),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `;
   try {
     await pool.query(query);
+    // Add profileimage column if table already exists without it
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS profileimage VARCHAR(500);`);
     console.log("Users table created successfully.");
   } catch (err) {
     console.error("Error creating users table:", err);
@@ -130,6 +133,33 @@ const updateUserRole = async (userId, role) => {
   return result.rowCount > 0;
 };
 
+/**
+ * UPDATE PROFILE IMAGE
+ */
+const updateProfileImage = async (userId, imageUrl) => {
+  const query = `
+    UPDATE users
+    SET profileimage = $1
+    WHERE userId = $2
+    RETURNING userId, fullName, email, phone, role, profileimage
+  `;
+  const result = await pool.query(query, [imageUrl, userId]);
+  return result.rows[0];
+};
+
+/**
+ * GET USER PROFILE
+ */
+const getProfile = async (userId) => {
+  const query = `
+    SELECT userId, fullName, email, phone, role, isActive, profileimage, createdat
+    FROM users
+    WHERE userId = $1
+  `;
+  const result = await pool.query(query, [userId]);
+  return result.rows[0];
+};
+
 module.exports = {
   createUser,
   findUserByEmail,
@@ -139,4 +169,6 @@ module.exports = {
   updateUserStatus,
   updateUserRole,
   createUserTable,
+  updateProfileImage,
+  getProfile,
 };

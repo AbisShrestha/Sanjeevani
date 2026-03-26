@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './src/navigation/AppNavigator';
 import { CartProvider } from './src/context/CartContext';
+import { MedicineTrackerProvider } from './src/context/MedicineTrackerContext';
 
 function App() {
     const isDarkMode = useColorScheme() === 'dark';
@@ -15,7 +16,9 @@ function App() {
                 <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
                 <NavigationContainer>
                     <CartProvider>
-                        <AppNavigator />
+                        <MedicineTrackerProvider>
+                            <AppNavigator />
+                        </MedicineTrackerProvider>
                     </CartProvider>
                 </NavigationContainer>
             </SafeAreaProvider>

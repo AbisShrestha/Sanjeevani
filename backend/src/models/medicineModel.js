@@ -10,13 +10,21 @@ const createCategoryTable = async () => {
   const query = `
       CREATE TABLE IF NOT EXISTS categories (
         categoryid SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL UNIQUE,
         description TEXT,
         createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `;
   try {
     await pool.query(query);
+    // Add UNIQUE constraint if table already existed without it
+    await pool.query(`
+      DO $$ BEGIN
+        ALTER TABLE categories ADD CONSTRAINT categories_name_unique UNIQUE (name);
+      EXCEPTION WHEN duplicate_table OR duplicate_object THEN
+        NULL;
+      END $$;
+    `);
     console.log("Categories table created successfully.");
   } catch (err) {
     console.error("Error creating categories table:", err);
@@ -134,6 +142,61 @@ const getAllMedicines = async () => {
 };
 
 /* 
+   SEARCH MEDICINES (Server-Side Query)
+   Supports: text search (ILIKE), category filter, price sort
+ */
+const searchMedicines = async ({ search, category, sortBy }) => {
+  let query = `
+    SELECT 
+      m.medicineid,
+      m.name,
+      m.description,
+      m.dosage,
+      m.benefits,
+      m.usageinstructions,
+      m.precautions,
+      m.price,
+      m.stock,
+      m.imageurl,
+      m.lowstockthreshold,
+      m.createdat,
+      c.name AS categoryname
+    FROM medicines m
+    LEFT JOIN categories c ON m.categoryid = c.categoryid
+    WHERE 1=1
+  `;
+
+  const values = [];
+  let paramIndex = 1;
+
+  // Text search on name and description
+  if (search && search.trim()) {
+    query += ` AND (m.name ILIKE $${paramIndex} OR m.description ILIKE $${paramIndex})`;
+    values.push(`%${search.trim()}%`);
+    paramIndex++;
+  }
+
+  // Category filter
+  if (category && category.trim() && category.toLowerCase() !== 'all') {
+    query += ` AND c.name ILIKE $${paramIndex}`;
+    values.push(`%${category.trim()}%`);
+    paramIndex++;
+  }
+
+  // Sort by price
+  if (sortBy === 'lowHigh') {
+    query += ` ORDER BY m.price ASC`;
+  } else if (sortBy === 'highLow') {
+    query += ` ORDER BY m.price DESC`;
+  } else {
+    query += ` ORDER BY m.createdat DESC`;
+  }
+
+  const result = await pool.query(query, values);
+  return result.rows;
+};
+
+/* 
    GET SINGLE MEDICINE
  */
 const getMedicineById = async (medicineId) => {
@@ -242,14 +305,24 @@ const deleteMedicine = async (medicineId) => {
  */
 const getLowStockMedicines = async () => {
   const query = `
-    SELECT
-      medicineid,
-      name,
-      stock,
-      lowstockthreshold
-    FROM medicines
-    WHERE stock <= lowstockthreshold
-    ORDER BY stock ASC
+    SELECT 
+      m.medicineid,
+      m.name,
+      m.description,
+      m.dosage,
+      m.benefits,
+      m.usageinstructions,
+      m.precautions,
+      m.price,
+      m.stock,
+      m.imageurl,
+      m.lowstockthreshold,
+      m.createdat,
+      c.name AS categoryname
+    FROM medicines m
+    LEFT JOIN categories c ON m.categoryid = c.categoryid
+    WHERE m.stock <= COALESCE(m.lowstockthreshold, 10)
+    ORDER BY m.stock ASC
   `;
 
   const result = await pool.query(query);
@@ -259,6 +332,7 @@ const getLowStockMedicines = async () => {
 module.exports = {
   createMedicine,
   getAllMedicines,
+  searchMedicines,
   getMedicineById,
   updateMedicine,
   updateStock,

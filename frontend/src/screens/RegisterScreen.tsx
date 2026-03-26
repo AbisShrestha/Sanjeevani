@@ -41,7 +41,16 @@ const RegisterScreen = ({ navigation }: any) => {
       Alert.alert('Success', 'Account created successfully');
       navigation.navigate('Login');
     } catch (error: any) {
-      Alert.alert('Registration Failed', error.message);
+      console.error(error);
+      let errorMessage = 'Something went wrong. Please try again.';
+
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      Alert.alert('Registration Failed', errorMessage);
     } finally {
       setLoading(false);
     }

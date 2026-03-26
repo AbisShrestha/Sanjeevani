@@ -15,14 +15,10 @@ import Constants from 'expo-constants';
 
 /* 
    BASE URL SETUP (DYNAMIC)
-   Automatically detects the IP address of the computer running the Expo server.
-   This prevents "Network Error" when WiFi IP changes.
+   The backend's start-tunnel.js automatically writes the live tunnel URL into the .env file.
+   Expo automatically loads it here!
 */
-const getBackendUrl = () => {
-  return 'https://pdtuy-2001-df4-2b40-c78c-d1ca-eabd-e0fa-4bf3.a.free.pinggy.link';
-};
-
-export const SERVER_URL = getBackendUrl();
+export const SERVER_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 export const BASE_URL = `${SERVER_URL}/api`;
 
 // Create a configured "Axios" instance (our internet browser for code)
@@ -35,7 +31,7 @@ const api = axios.create({
   },
 });
 
-console.log('DEBUG: API BASE URL set to:', BASE_URL);
+
 
 /* 
    TOKEN MANAGEMENT
@@ -64,9 +60,15 @@ AsyncStorage.getItem('token')
    This lets the backend know we are logged in.
  */
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
+    // If memory token is null, try to grab it directly from storage (covers fast-refresh cases)
+    if (!authToken) {
+      authToken = await AsyncStorage.getItem('token');
+    }
+    
     if (authToken) {
-      config.headers.set('Authorization', `Bearer ${authToken}`);
+      // Direct assignment instead of .set() which can be buggy in older RN + Axios versions
+      config.headers['Authorization'] = `Bearer ${authToken}`;
     }
     return config;
   },

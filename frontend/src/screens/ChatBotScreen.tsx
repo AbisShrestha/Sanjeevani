@@ -84,33 +84,79 @@ const ChatBotScreen = ({ navigation }: { navigation: any }) => {
             timestamp: new Date(),
         };
 
-        setMessages((prev) => [...prev, userMsg]);
+        const botMsgId = (Date.now() + 1).toString();
+        
+        // 2. Add an EMPTY bot message placeholder that we will immediately start filling
+        const botMsgPlaceholder: Message = {
+            id: botMsgId,
+            text: '',
+            sender: 'bot',
+            timestamp: new Date(),
+        };
+
+        setMessages((prev) => [...prev, userMsg, botMsgPlaceholder]);
         setInputText('');
         setIsTyping(true);
 
-        // 2. Call Backend API
-        try {
-            const response = await api.post('/chat', { message: cleanText });
+        // 3. Call Backend API using XHR to read the stream progressively
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${api.defaults.baseURL}/chat`);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        
+        // Manual extraction to bridge Axios token config to XHR
+        import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => {
+            AsyncStorage.getItem('token').then(token => {
+                if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+                
+                // Moved send() inside here to ensure auth header is attached before sending
+                xhr.send(JSON.stringify({ message: cleanText }));
+            });
+        });
 
-            const botMsg: Message = {
-                id: (Date.now() + 1).toString(),
-                text: response.data.reply,
-                sender: 'bot',
-                timestamp: new Date(),
-            };
-            setMessages((prev) => [...prev, botMsg]);
-        } catch (error) {
-            console.error(error);
-            const errorMsg: Message = {
-                id: (Date.now() + 1).toString(),
-                text: "I am having trouble connecting to my knowledge base. Please try again later.",
-                sender: 'bot',
-                timestamp: new Date(),
-            };
-            setMessages((prev) => [...prev, errorMsg]);
-        } finally {
-            setIsTyping(false);
-        }
+        let seenBytes = 0;
+
+        xhr.onreadystatechange = () => {
+             if (xhr.readyState === 3 || xhr.readyState === 4) {
+                 const newResponse = xhr.responseText.substring(seenBytes);
+                 seenBytes = xhr.responseText.length;
+                 
+                 // Process the SSE chunks
+                 const chunks = newResponse.split('\n\n');
+                 
+                 for (const chunk of chunks) {
+                     if (chunk.startsWith('data: ')) {
+                         try {
+                             const dataObj = JSON.parse(chunk.replace('data: ', ''));
+                             
+                             if (dataObj.text) {
+                                 // Dynamically update the specific bot message in the state
+                                 setMessages(prev => prev.map(m => 
+                                     m.id === botMsgId 
+                                        ? { ...m, text: m.text + dataObj.text }
+                                        : m
+                                 ));
+                             }
+                         } catch (e) {
+                             // Ignore partial JSON blocks that haven't fully streamed in yet
+                         }
+                     }
+                 }
+                 
+                 if (xhr.readyState === 4) {
+                     setIsTyping(false);
+                 }
+             }
+        };
+
+        xhr.onerror = () => {
+             console.error('XHR Stream Error');
+             setMessages(prev => prev.map(m => 
+                m.id === botMsgId 
+                   ? { ...m, text: "I am having trouble connecting to my knowledge base. Please try again later." }
+                   : m
+             ));
+             setIsTyping(false);
+        };
     };
 
     const renderItem = ({ item }: { item: Message }) => {

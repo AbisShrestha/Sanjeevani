@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "dev:tunnel": "node start-tunnel.js",
+    "seed": "node src/seed.js"
   },
   "keywords": [],
   "author": "",
@@ -13,11 +15,14 @@
   "type": "commonjs",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@ngrok/ngrok": "^1.7.0",
+    "axios": "^1.13.6",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "localtunnel": "^2.0.2",
     "multer": "^2.0.2",
     "pg": "^8.16.3"
   },

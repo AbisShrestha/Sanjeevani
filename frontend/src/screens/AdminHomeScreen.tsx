@@ -237,7 +237,15 @@ const AdminDashboardScreen = ({ navigation }: { navigation: any }) => {
             subtitle="View low stock items"
             icon="boxes"
             iconColor="#FB8C00"
-            onPress={() => Alert.alert('Coming Soon')}
+            onPress={() => navigation.navigate('AdminStockAlerts')}
+          />
+
+          <AdminAction
+            title="Order Approvals"
+            subtitle="Manage & verify user orders"
+            icon="clipboard-check"
+            iconColor="#00BCD4"
+            onPress={() => navigation.navigate('AdminManageOrders')}
           />
 
           <AdminAction
