@@ -46,6 +46,7 @@ services:
     volumes:
       - ./uploads:/app/uploads
       - ./src:/app/src
+      - ./scripts:/app/scripts
     networks:
       - sanjeevani_default
 
