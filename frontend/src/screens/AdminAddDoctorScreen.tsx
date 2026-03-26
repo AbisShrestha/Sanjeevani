@@ -98,13 +98,6 @@ const AdminAddDoctorScreen = ({ navigation }: { navigation: any }) => {
 
     return (
         <ScrollView className="flex-1 bg-[#F5F7FA]">
-            <View className="flex-row items-center px-5 py-4 pt-12 bg-white shadow-sm">
-                <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2">
-                    <FontAwesome5 name="arrow-left" size={20} color="#37474F" />
-                </TouchableOpacity>
-                <Text className="text-xl font-bold text-[#37474F] ml-4">Add New Doctor</Text>
-            </View>
-
             <View className="p-5 pb-20">
                 {/* Image Upload */}
                 <View className="items-center mb-6">

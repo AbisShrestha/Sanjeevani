@@ -89,23 +89,36 @@ const AdminDoctorListScreen = ({ navigation }: { navigation: any }) => {
     const renderItem = ({ item }: { item: any }) => {
         const imageUri = buildImageUri(item.image, 'https://via.placeholder.com/150');
         return (
-            <TouchableOpacity
-                className="flex-row items-center bg-white p-4 rounded-xl mb-3 shadow-sm"
-                activeOpacity={0.8}
-                onPress={() => navigation.navigate('AdminEditDoctor', { doctor: item })}
-            >
-                <Image
-                    source={{ uri: imageUri || 'https://via.placeholder.com/150' }}
-                    className="w-[50px] h-[50px] rounded-full bg-[#eee]"
-                />
-                <View className="flex-1 ml-4 justify-center">
-                    <Text className="text-base font-bold text-[#333]">{item.name}</Text>
-                    <Text className="text-xs text-[#666] mt-0.5">{item.specialty} | {item.experience}</Text>
+            <View className="bg-white p-4 rounded-xl mb-3 shadow-sm">
+                <View className="flex-row items-center">
+                    <Image
+                        source={{ uri: imageUri || 'https://via.placeholder.com/150' }}
+                        className="w-[50px] h-[50px] rounded-full bg-[#eee]"
+                    />
+                    <View className="flex-1 ml-4 justify-center">
+                        <Text className="text-base font-bold text-[#333]">{item.name}</Text>
+                        <Text className="text-xs text-[#666] mt-0.5">{item.specialty} | {item.experience}</Text>
+                    </View>
                 </View>
-                <TouchableOpacity onPress={() => handleDelete(item.id, item.name)} className="p-2.5 bg-[#FFEBEE] rounded-lg">
-                    <FontAwesome5 name="trash" size={14} color="#D32F2F" />
-                </TouchableOpacity>
-            </TouchableOpacity>
+
+                {/* Edit & Delete Buttons */}
+                <View className="flex-row justify-end mt-4 pt-3 border-t border-[#f0f0f0]">
+                    <TouchableOpacity
+                        className="flex-row items-center mr-5"
+                        onPress={() => navigation.navigate('AdminEditDoctor', { doctor: item })}
+                    >
+                        <FontAwesome5 name="edit" size={14} color="#1976D2" />
+                        <Text className="ml-1.5 text-[#1976D2] font-semibold">Edit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        className="flex-row items-center"
+                        onPress={() => handleDelete(item.id, item.name)}
+                    >
+                        <FontAwesome5 name="trash" size={14} color="#D32F2F" />
+                        <Text className="ml-1.5 text-[#D32F2F] font-semibold">Delete</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
         );
     };
 
