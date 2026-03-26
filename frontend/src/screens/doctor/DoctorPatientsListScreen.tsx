@@ -79,7 +79,7 @@ const DoctorPatientsListScreen = () => {
             ) : (
                 <FlatList
                     data={patients}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item: any) => (item.id || Math.random()).toString()}
                     renderItem={renderItem}
                     contentContainerStyle={{ padding: 16 }}
                 />

@@ -127,7 +127,7 @@ export default function UserAppointmentsScreen({ navigation }: { navigation: any
                 <FlatList
                     data={appointments}
                     renderItem={renderItem}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item: any) => (item.id || Math.random()).toString()}
                     contentContainerStyle={styles.listContainer}
                     showsVerticalScrollIndicator={false}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#00695C']} />}

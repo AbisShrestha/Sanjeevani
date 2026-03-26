@@ -141,7 +141,7 @@ const MyOrdersScreen = () => {
           <FlatList
             data={orders}
             renderItem={renderOrderItem}
-            keyExtractor={(item) => item.orderid.toString()}
+            keyExtractor={(item: any) => (item.orderid || Math.random()).toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 40 }}
           />

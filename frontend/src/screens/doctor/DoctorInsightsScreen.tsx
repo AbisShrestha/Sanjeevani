@@ -172,7 +172,7 @@ const DoctorInsightsScreen = () => {
         <View style={styles.container}>
             <FlatList
                 data={insights}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item: any) => (item.id || Math.random()).toString()}
                 renderItem={renderItem}
                 contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
                 ListEmptyComponent={

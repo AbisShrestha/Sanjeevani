@@ -9,7 +9,8 @@ import {
     Image,
     RefreshControl,
     Platform,
-    ActivityIndicator
+    ActivityIndicator,
+    TextInput
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -28,13 +29,15 @@ const AdminDoctorListScreen = ({ navigation }: { navigation: any }) => {
         }, [])
     );
 
-    const fetchDoctors = async () => {
+    const [searchText, setSearchText] = useState('');
+
+    const fetchDoctors = async (search = '') => {
         try {
             // Only show full screen loader on first load, not during refresh
-            if (!refreshing) {
+            if (!refreshing && !search) {
                 setLoading(true);
             }
-            const res = await api.get('/doctors');
+            const res = await api.get(`/doctors?search=${encodeURIComponent(search)}`);
             setDoctors(res.data);
         } catch (error) {
             console.error(error);
@@ -44,9 +47,18 @@ const AdminDoctorListScreen = ({ navigation }: { navigation: any }) => {
         }
     };
 
+    // Search effect (debounced)
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            fetchDoctors(searchText);
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchText]);
+
     const onRefresh = () => {
         setRefreshing(true);
-        fetchDoctors();
+        fetchDoctors(searchText);
     };
 
     const handleDelete = (id: number, name: string) => {
@@ -61,7 +73,7 @@ const AdminDoctorListScreen = ({ navigation }: { navigation: any }) => {
                     onPress: async () => {
                         try {
                             await api.delete(`/doctors/${id}`);
-                            fetchDoctors(); // Refresh
+                            fetchDoctors(searchText); // Refresh
                         } catch (err) {
                             Alert.alert("Error", "Could not delete.");
                         }
@@ -96,7 +108,21 @@ const AdminDoctorListScreen = ({ navigation }: { navigation: any }) => {
 
     return (
         <View className="flex-1 bg-[#F5F7FA]">
-            {/* Header Removed */}
+            {/* SEARCH BAR */}
+            <View className="bg-white p-3 mx-4 mt-4 mb-2 rounded-xl flex-row items-center shadow-sm border border-[#eee]">
+                <FontAwesome5 name="search" size={16} color="#999" />
+                <TextInput
+                    className="flex-1 ml-3 text-[15px] text-[#333]"
+                    placeholder="Search doctors..."
+                    value={searchText}
+                    onChangeText={setSearchText}
+                />
+                {searchText ? (
+                    <TouchableOpacity onPress={() => setSearchText('')}>
+                        <FontAwesome5 name="times-circle" size={16} color="#ccc" />
+                    </TouchableOpacity>
+                ) : null}
+            </View>
 
             <FlatList
                 data={doctors}
@@ -110,8 +136,12 @@ const AdminDoctorListScreen = ({ navigation }: { navigation: any }) => {
                             <View className="bg-[#E8F5E9] w-16 h-16 rounded-full items-center justify-center mb-4">
                                 <FontAwesome5 name="user-md" size={30} color="#2E7D32" />
                             </View>
-                            <Text className="text-[#90A4AE] text-lg font-medium">No doctors found.</Text>
-                            <Text className="text-[#B0BEC5] text-sm mt-1">Tap + to add a new doctor.</Text>
+                            <Text className="text-[#90A4AE] text-lg font-medium">
+                                {searchText ? 'No doctors match your search' : 'No doctors found'}
+                            </Text>
+                            <Text className="text-[#B0BEC5] text-sm mt-1">
+                                {searchText ? 'Try a different name or specialty' : 'Tap + to add a new doctor.'}
+                            </Text>
                         </View>
                     ) : (
                         <View className="mt-12">

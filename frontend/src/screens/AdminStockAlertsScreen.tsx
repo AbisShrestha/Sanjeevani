@@ -184,7 +184,7 @@ const AdminStockAlertsScreen = ({ navigation }: { navigation: any }) => {
       ) : (
         <FlatList
           data={alerts}
-          keyExtractor={(item) => item.medicineid.toString()}
+          keyExtractor={(item: any) => (item.medicineid || Math.random()).toString()}
           renderItem={renderItem}
           contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
           refreshControl={

@@ -67,7 +67,7 @@ const CommunityScreen = () => {
             ) : (
                 <FlatList
                     data={insights}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item: any) => (item.id || Math.random()).toString()}
                     renderItem={renderItem}
                     contentContainerStyle={{ padding: 16, paddingTop: 20, paddingBottom: 100 }}
                     ListEmptyComponent={

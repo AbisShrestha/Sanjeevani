@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, Alert, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { getAllOrders, updateOrderStatus } from '../services/adminService';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -9,10 +9,20 @@ const AdminManageOrdersScreen = () => {
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchText);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchText]);
 
     const fetchOrders = async () => {
         try {
-            const data = await getAllOrders();
+            setLoading(true);
+            const data = await getAllOrders(debouncedSearch);
             setOrders(data);
         } catch (error) {
             console.error('Failed to fetch admin orders:', error);
@@ -26,7 +36,7 @@ const AdminManageOrdersScreen = () => {
     useFocusEffect(
         useCallback(() => {
             fetchOrders();
-        }, [])
+        }, [debouncedSearch])
     );
 
     const onRefresh = () => {
@@ -133,19 +143,41 @@ const AdminManageOrdersScreen = () => {
 
     return (
         <View style={styles.container}>
-            <FlatList
-                data={orders}
-                keyExtractor={(item) => item.orderid.toString()}
+            {/* SEARCH BAR */}
+            <View style={{ backgroundColor: 'white', padding: 12, marginHorizontal: 16, marginTop: 16, marginBottom: 8, borderRadius: 12, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2, borderWidth: 1, borderColor: '#eee' }}>
+                <FontAwesome5 name="search" size={16} color="#999" />
+                <TextInput
+                    style={{ flex: 1, marginLeft: 12, fontSize: 15, color: '#333' }}
+                    placeholder="Search by Order ID, Name, Email..."
+                    value={searchText}
+                    onChangeText={setSearchText}
+                />
+                {searchText ? (
+                    <TouchableOpacity onPress={() => setSearchText('')} style={{ padding: 4 }}>
+                        <FontAwesome5 name="times-circle" size={16} color="#ccc" />
+                    </TouchableOpacity>
+                ) : null}
+            </View>
+
+            {loading && !refreshing && !searchText ? (
+                <View style={[styles.center, { marginTop: 50 }]}>
+                    <ActivityIndicator size="large" color="#00695C" />
+                </View>
+            ) : (
+                <FlatList
+                    data={orders}
+                keyExtractor={(item: any) => (item.orderid || Math.random()).toString()}
                 renderItem={renderOrderItem}
                 contentContainerStyle={styles.listContainer}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#00695C']} />}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <FontAwesome5 name="box-open" size={64} color="#ccc" />
-                        <Text style={styles.emptyText}>No orders received yet.</Text>
+                        <FontAwesome5 name={searchText ? "search-minus" : "box-open"} size={64} color="#ccc" />
+                        <Text style={styles.emptyText}>{searchText ? 'No orders match your search query.' : 'No orders received yet.'}</Text>
                     </View>
                 }
             />
+            )}
         </View>
     );
 };

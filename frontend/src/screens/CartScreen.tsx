@@ -124,7 +124,7 @@ const CartScreen = ({ navigation }: { navigation: any }) => {
             <FlatList
                 data={cartItems}
                 renderItem={renderItem}
-                keyExtractor={(item) => item.medicineid.toString()}
+                keyExtractor={(item: any) => (item.medicineid || Math.random()).toString()}
                 contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={

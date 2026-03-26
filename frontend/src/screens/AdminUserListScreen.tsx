@@ -8,7 +8,8 @@ import {
     ActivityIndicator,
     StatusBar,
     RefreshControl,
-    Platform
+    Platform,
+    TextInput
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -19,14 +20,14 @@ const AdminUserListScreen = ({ navigation }: { navigation: any }) => {
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [searchText, setSearchText] = useState('');
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-
-    const fetchUsers = async () => {
+    const fetchUsers = async (search = '') => {
         try {
-            const res = await api.get('/auth/users');
+            if (!refreshing && !search) {
+                setLoading(true);
+            }
+            const res = await api.get(`/auth/users?search=${encodeURIComponent(search)}`);
             setUsers(res.data);
         } catch (error) {
             console.error("Fetch users error:", error);
@@ -37,12 +38,20 @@ const AdminUserListScreen = ({ navigation }: { navigation: any }) => {
         }
     };
 
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            fetchUsers(searchText);
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchText]);
+
     const toggleStatus = async (id: string, currentStatus: boolean, name: string) => {
         try {
             const newStatus = !currentStatus;
             await api.put(`/auth/users/${id}/status`, { isActive: newStatus });
             // Optimistic update or refresh
-            fetchUsers();
+            fetchUsers(searchText);
             // Optional: Simple toast or just visual change
         } catch (error) {
             Alert.alert("Error", "Failed to change user status.");
@@ -78,7 +87,7 @@ const AdminUserListScreen = ({ navigation }: { navigation: any }) => {
         try {
             await api.put(`/auth/users/${id}/role`, { role: newRole });
             Alert.alert("Success", `User is now a ${newRole}.`);
-            fetchUsers();
+            fetchUsers(searchText);
         } catch (error) {
             Alert.alert("Error", "Failed to update role.");
         }
@@ -86,58 +95,83 @@ const AdminUserListScreen = ({ navigation }: { navigation: any }) => {
 
     const onRefresh = () => {
         setRefreshing(true);
-        fetchUsers();
+        fetchUsers(searchText);
     };
 
-    const renderItem = ({ item }: { item: any }) => (
-        <View className="flex-row items-center bg-white p-4 rounded-xl mb-3 shadow-sm">
-            <View className="w-[50px] h-[50px] rounded-full bg-[#E0F2F1] justify-center items-center mr-4">
-                <FontAwesome5
-                    name={item.role === 'admin' ? "user-shield" : "user"}
-                    size={24}
-                    color={item.role === 'admin' ? "#E65100" : "#00695C"}
-                />
-            </View>
-            <View className="flex-1">
-                <Text className="text-base font-bold text-[#333]">{item.fullname}</Text>
-                <Text className="text-sm text-[#666]">{item.email}</Text>
-                <Text className="text-xs text-[#999] mt-0.5 capitalize">Role: {item.role}</Text>
-                <Text className={`text-xs font-bold mt-0.5 ${item.isactive ? 'text-green-600' : 'text-red-600'}`}>
-                    {item.isactive ? 'Active' : 'Banned'}
-                </Text>
-            </View>
-            <View className="flex-row">
-                <TouchableOpacity onPress={() => handleUpdateRole(item.userid, item.role, item.fullname)} className="p-2 ml-1">
-                    <FontAwesome5 name="user-edit" size={18} color="#00695C" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={() => toggleStatus(item.userid, item.isactive, item.fullname)}
-                    className={`p-2 ml-1 rounded-full ${item.isactive ? 'bg-red-50' : 'bg-green-50'}`}
-                >
+    const renderItem = ({ item }: { item: any }) => {
+        const id = item.userid || item.userId;
+        const name = item.fullname || item.fullName;
+        const active = item.isactive !== undefined ? item.isactive : item.isActive;
+        
+        return (
+            <View className="flex-row items-center bg-white p-4 rounded-xl mb-3 shadow-sm">
+                <View className="w-[50px] h-[50px] rounded-full bg-[#E0F2F1] justify-center items-center mr-4">
                     <FontAwesome5
-                        name={item.isactive ? "ban" : "check-circle"}
-                        size={18}
-                        color={item.isactive ? "#D32F2F" : "#2E7D32"}
+                        name={item.role === 'admin' ? "user-shield" : "user"}
+                        size={24}
+                        color={item.role === 'admin' ? "#E65100" : "#00695C"}
                     />
-                </TouchableOpacity>
+                </View>
+                <View className="flex-1">
+                    <Text className="text-base font-bold text-[#333]">{name}</Text>
+                    <Text className="text-sm text-[#666]">{item.email}</Text>
+                    <Text className="text-xs text-[#999] mt-0.5 capitalize">Role: {item.role}</Text>
+                    <Text className={`text-xs font-bold mt-0.5 ${active ? 'text-green-600' : 'text-red-600'}`}>
+                        {active ? 'Active' : 'Banned'}
+                    </Text>
+                </View>
+                <View className="flex-row">
+                    <TouchableOpacity onPress={() => handleUpdateRole(id, item.role, name)} className="p-2 ml-1">
+                        <FontAwesome5 name="user-edit" size={18} color="#00695C" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => toggleStatus(id, active, name)}
+                        className={`p-2 ml-1 rounded-full ${active ? 'bg-red-50' : 'bg-green-50'}`}
+                    >
+                        <FontAwesome5
+                            name={active ? "ban" : "check-circle"}
+                            size={18}
+                            color={active ? "#D32F2F" : "#2E7D32"}
+                        />
+                    </TouchableOpacity>
+                </View>
             </View>
-        </View>
-    );
+        );
+    };
 
     return (
         <View className="flex-1 bg-[#F5F7FA]">
-            {loading ? (
+            {/* SEARCH BAR */}
+            <View className="bg-white p-3 mx-4 mt-4 mb-2 rounded-xl flex-row items-center shadow-sm border border-[#eee]">
+                <FontAwesome5 name="search" size={16} color="#999" />
+                <TextInput
+                    className="flex-1 ml-3 text-[15px] text-[#333]"
+                    placeholder="Search users..."
+                    value={searchText}
+                    onChangeText={setSearchText}
+                />
+                {searchText ? (
+                    <TouchableOpacity onPress={() => setSearchText('')}>
+                        <FontAwesome5 name="times-circle" size={16} color="#ccc" />
+                    </TouchableOpacity>
+                ) : null}
+            </View>
+
+            {loading && !refreshing && !searchText ? (
                 <ActivityIndicator size="large" color="#00695C" style={{ marginTop: 50 }} />
             ) : (
                 <FlatList
                     data={users}
                     renderItem={renderItem}
-                    keyExtractor={(item) => item.userid.toString()}
+                    keyExtractor={(item) => (item.userid || item.userId || Math.random()).toString()}
                     contentContainerStyle={{ padding: 16 }}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                     ListEmptyComponent={
                         <View className="items-center mt-12">
-                            <Text className="text-[#999]">No users found.</Text>
+                            <FontAwesome5 name="users-slash" size={40} color="#ccc" />
+                            <Text className="text-[#999] mt-3">
+                                {searchText ? 'No users match your search' : 'No users found.'}
+                            </Text>
                         </View>
                     }
                 />

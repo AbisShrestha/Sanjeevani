@@ -204,7 +204,7 @@ const MyMedicalReportsScreen = ({ navigation }: { navigation: any }) => {
             ) : (
                 <FlatList
                     data={reports}
-                    keyExtractor={(item) => item.reportid.toString()}
+                    keyExtractor={(item: any) => (item.reportid || Math.random()).toString()}
                     renderItem={renderItem}
                     contentContainerStyle={styles.listContainer}
                     showsVerticalScrollIndicator={false}

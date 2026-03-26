@@ -139,7 +139,7 @@ const DoctorAppointmentsScreen = () => {
             ) : (
                 <FlatList
                     data={appointments}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item: any) => (item.id || Math.random()).toString()}
                     renderItem={renderItem}
                     contentContainerStyle={{ padding: 16 }}
                 />
