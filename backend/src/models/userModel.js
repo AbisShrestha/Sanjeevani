@@ -46,7 +46,7 @@ const createUser = async (user) => {
   const query = `
     INSERT INTO users (fullName, email, passwordHash, phone, role, isActive)
     VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING userId, fullName, email, phone, role, isActive, createdAt
+    RETURNING userId, fullName, email, phone, role, isActive, created_at AS "createdAt"
   `;
 
   const values = [fullName, email, passwordHash, phone, role, isActive];
@@ -72,7 +72,7 @@ const findUserByEmail = async (email) => {
  */
 const findUserById = async (userId) => {
   const query = `
-    SELECT userId, fullName, email, phone, role, isActive, createdAt
+    SELECT userId, fullName, email, phone, role, isActive, created_at AS "createdAt"
     FROM users
     WHERE userId = $1
   `;
@@ -85,10 +85,10 @@ const findUserById = async (userId) => {
  */
 const getAllDoctors = async () => {
   const query = `
-    SELECT userId, fullName, email, phone, isActive, createdAt
+    SELECT userId, fullName, email, phone, isActive, created_at AS "createdAt"
     FROM users
     WHERE role = 'doctor'
-    ORDER BY createdAt DESC
+    ORDER BY created_at DESC
   `;
   const result = await pool.query(query);
   return result.rows;
@@ -112,9 +112,9 @@ const updateUserStatus = async (userId, isActive) => {
  */
 const getAllUsers = async () => {
   const query = `
-    SELECT userId, fullName, email, phone, role, isActive, createdAt
+    SELECT userId, fullName, email, phone, role, isActive, created_at AS "createdAt"
     FROM users
-    ORDER BY createdAt DESC
+    ORDER BY created_at DESC
   `;
   const result = await pool.query(query);
   return result.rows;
