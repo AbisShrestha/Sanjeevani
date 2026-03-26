@@ -109,7 +109,7 @@ const getAllDoctors = async (search = '') => {
  */
 const getAllUsers = async (search = '') => {
   let query = `
-    SELECT userId AS "userId", fullName AS "fullName", email, phone, role, isActive AS "isActive", createdat AS "createdAt", profileimage
+    SELECT userid, fullname, email, phone, role, isactive, createdat, profileimage
     FROM users
   `;
   const values = [];
