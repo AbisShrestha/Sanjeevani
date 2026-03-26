@@ -17,7 +17,7 @@ const createUserTable = async () => {
       role VARCHAR(50) DEFAULT 'user',
       isActive BOOLEAN DEFAULT TRUE,
       profileimage VARCHAR(500),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `;
   try {
@@ -46,7 +46,7 @@ const createUser = async (user) => {
   const query = `
     INSERT INTO users (fullName, email, passwordHash, phone, role, isActive)
     VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING userId, fullName, email, phone, role, isActive, created_at AS "createdAt"
+    RETURNING userId, fullName, email, phone, role, isActive, createdat AS "createdAt"
   `;
 
   const values = [fullName, email, passwordHash, phone, role, isActive];
@@ -72,7 +72,7 @@ const findUserByEmail = async (email) => {
  */
 const findUserById = async (userId) => {
   const query = `
-    SELECT userId, fullName, email, phone, role, isActive, created_at AS "createdAt"
+    SELECT userId, fullName, email, phone, role, isActive, createdat AS "createdAt"
     FROM users
     WHERE userId = $1
   `;
@@ -82,15 +82,46 @@ const findUserById = async (userId) => {
 
 /**
  * GET ALL DOCTORS (ADMIN)
+ * Supports: ?search=text
  */
-const getAllDoctors = async () => {
-  const query = `
-    SELECT userId, fullName, email, phone, isActive, created_at AS "createdAt"
+const getAllDoctors = async (search = '') => {
+  let query = `
+    SELECT userId AS "userId", fullName AS "fullName", email, phone, isActive AS "isActive", createdat AS "createdAt"
     FROM users
     WHERE role = 'doctor'
-    ORDER BY created_at DESC
   `;
-  const result = await pool.query(query);
+  const values = [];
+
+  if (search) {
+    query += ` AND (fullName ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1)`;
+    values.push(`%${search}%`);
+  }
+
+  query += ` ORDER BY createdat DESC`;
+
+  const result = await pool.query(query, values);
+  return result.rows;
+};
+
+/**
+ * GET ALL USERS (ADMIN)
+ * Supports: ?search=text
+ */
+const getAllUsers = async (search = '') => {
+  let query = `
+    SELECT userId AS "userId", fullName AS "fullName", email, phone, role, isActive AS "isActive", createdat AS "createdAt"
+    FROM users
+  `;
+  const values = [];
+
+  if (search) {
+    query += ` WHERE (fullName ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1)`;
+    values.push(`%${search}%`);
+  }
+
+  query += ` ORDER BY createdat DESC`;
+
+  const result = await pool.query(query, values);
   return result.rows;
 };
 
@@ -107,18 +138,7 @@ const updateUserStatus = async (userId, isActive) => {
   return result.rowCount > 0;
 };
 
-/**
- * GET ALL USERS (ADMIN)
- */
-const getAllUsers = async () => {
-  const query = `
-    SELECT userId, fullName, email, phone, role, isActive, created_at AS "createdAt"
-    FROM users
-    ORDER BY created_at DESC
-  `;
-  const result = await pool.query(query);
-  return result.rows;
-};
+
 
 /**
  * UPDATE USER ROLE (ADMIN ONLY)
@@ -152,7 +172,7 @@ const updateProfileImage = async (userId, imageUrl) => {
  */
 const getProfile = async (userId) => {
   const query = `
-    SELECT userId, fullName, email, phone, role, isActive, profileimage, createdat
+    SELECT userId, fullName, email, phone, role, isActive, profileimage, createdat AS "createdAt"
     FROM users
     WHERE userId = $1
   `;
