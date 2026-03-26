@@ -74,7 +74,7 @@ const getAllDoctors = async (req, res) => {
                 specialty: 'Ayurvedic Practitioner',
                 qualification: 'Verified User',
                 experience: 'Unknown',
-                image: null,
+                image: user.profileimage || null,
                 rating: 5.0,
                 is_available: user.isactive,
                 source: 'user_db'
