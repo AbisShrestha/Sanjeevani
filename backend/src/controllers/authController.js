@@ -138,11 +138,26 @@ const login = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     // In a real app, check if req.user.role === 'admin' here
-    const users = await userModel.getAllUsers();
+    const { search } = req.query;
+    const users = await userModel.getAllUsers(search);
     res.json(users);
   } catch (error) {
     console.error('Get all users error:', error);
     res.status(500).json({ message: 'Failed to fetch users' });
+  }
+};
+
+/* 
+   ADMIN – GET ALL DOCTORS
+ */
+const getAllDoctors = async (req, res) => {
+  try {
+    const { search } = req.query;
+    const doctors = await userModel.getAllDoctors(search);
+    res.json(doctors);
+  } catch (error) {
+    console.error('Get doctors error:', error);
+    res.status(500).json({ message: 'Failed to fetch doctors' });
   }
 };
 

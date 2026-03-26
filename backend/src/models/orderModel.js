@@ -111,9 +111,10 @@ const getUserOrders = async (userId) => {
 
 /**
  * GET ALL ORDERS FOR ADMIN
+ * Supports: ?search=text (orderId, username, email)
  */
-const getAllOrders = async () => {
-  const query = `
+const getAllOrders = async (search = '') => {
+  let query = `
     SELECT 
       o.orderid, o.totalamount, o.shippingaddress, o.paymentmethod, o.paymentstatus, o.orderstatus, o.createdat,
       u.fullname as username, u.email as useremail, u.phone as userphone,
@@ -131,10 +132,24 @@ const getAllOrders = async () => {
     LEFT JOIN users u ON o.userid = u.userid
     LEFT JOIN order_items oi ON o.orderid = oi.orderid
     LEFT JOIN medicines m ON oi.medicineid = m.medicineid
-    GROUP BY o.orderid, u.userid
-    ORDER BY o.createdat DESC;
   `;
-  const result = await pool.query(query);
+
+  const values = [];
+  if (search) {
+    // If search is a number, try matching orderid
+    const isNum = !isNaN(search);
+    if (isNum) {
+      query += ` WHERE o.orderid = $1 OR u.fullname ILIKE $2 OR u.email ILIKE $2`;
+      values.push(parseInt(search), `%${search}%`);
+    } else {
+      query += ` WHERE u.fullname ILIKE $1 OR u.email ILIKE $1`;
+      values.push(`%${search}%`);
+    }
+  }
+
+  query += ` GROUP BY o.orderid, u.userid ORDER BY o.createdat DESC`;
+
+  const result = await pool.query(query, values);
   return result.rows;
 };
 

@@ -20,15 +20,27 @@ const AdminStockAlertsScreen = ({ navigation }: { navigation: any }) => {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
   // States for inline quick update
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editStockValue, setEditStockValue] = useState<string>('');
   const [updatingParams, setUpdatingParams] = useState(false);
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchText]);
+
   const fetchAlerts = async () => {
     try {
-      const data = await getLowStockMedicines();
+      if (!refreshing && !debouncedSearch && alerts.length === 0) setLoading(true);
+      if (debouncedSearch) setIsSearching(true);
+      const data = await getLowStockMedicines(debouncedSearch);
       setAlerts(data);
     } catch (error) {
       console.error('Failed to fetch low stock alerts:', error);
@@ -36,12 +48,13 @@ const AdminStockAlertsScreen = ({ navigation }: { navigation: any }) => {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setIsSearching(false);
     }
   };
 
   useEffect(() => {
     fetchAlerts();
-  }, []);
+  }, [debouncedSearch]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -176,7 +189,25 @@ const AdminStockAlertsScreen = ({ navigation }: { navigation: any }) => {
         <Text className="text-xl font-bold text-[#37474F] ml-4">Stock Alerts</Text>
       </View>
 
-      {loading ? (
+      {/* SEARCH BAR */}
+      <View className="bg-white p-3 mx-5 mt-2 mb-2 rounded-xl flex-row items-center border border-[#eee]">
+        <FontAwesome5 name="search" size={16} color="#999" />
+        <TextInput
+          className="flex-1 ml-3 text-[15px] text-[#333]"
+          placeholder="Search items by name or category..."
+          value={searchText}
+          onChangeText={setSearchText}
+        />
+        {isSearching ? (
+          <ActivityIndicator size="small" color="#FF8F00" style={{ padding: 4 }} />
+        ) : searchText ? (
+          <TouchableOpacity onPress={() => setSearchText('')}>
+            <FontAwesome5 name="times-circle" size={16} color="#ccc" />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+
+      {loading && !refreshing ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#00695C" />
           <Text className="mt-3 text-[#78909C]">Checking inventory levels...</Text>
@@ -193,11 +224,11 @@ const AdminStockAlertsScreen = ({ navigation }: { navigation: any }) => {
           ListEmptyComponent={
             <View className="flex-1 justify-center items-center mt-20">
               <View className="w-24 h-24 bg-[#E8F5E9] rounded-full items-center justify-center mb-5 border border-[#C8E6C9]">
-                <FontAwesome5 name="check-double" size={40} color="#4CAF50" />
+                <FontAwesome5 name={searchText ? "search" : "check-double"} size={40} color="#4CAF50" />
               </View>
-              <Text className="text-2xl font-extrabold text-[#37474F] mb-2">All Clear!</Text>
+              <Text className="text-2xl font-extrabold text-[#37474F] mb-2">{searchText ? "No matches" : "All Clear!"}</Text>
               <Text className="text-base text-[#78909C] text-center px-10">
-                Your inventory is healthy. No medicines are currently running low on stock.
+                {searchText ? "No low-stock alerts found for this search." : "Your inventory is healthy. No medicines are currently running low on stock."}
               </Text>
             </View>
           }

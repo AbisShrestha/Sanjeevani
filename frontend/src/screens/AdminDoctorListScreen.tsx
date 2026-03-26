@@ -22,6 +22,7 @@ const AdminDoctorListScreen = ({ navigation }: { navigation: any }) => {
     const [doctors, setDoctors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
 
     useFocusEffect(
         useCallback(() => {
@@ -34,9 +35,10 @@ const AdminDoctorListScreen = ({ navigation }: { navigation: any }) => {
     const fetchDoctors = async (search = '') => {
         try {
             // Only show full screen loader on first load, not during refresh
-            if (!refreshing && !search) {
+            if (!refreshing && !search && doctors.length === 0) {
                 setLoading(true);
             }
+            if (search) setIsSearching(true);
             const res = await api.get(`/doctors?search=${encodeURIComponent(search)}`);
             setDoctors(res.data);
         } catch (error) {
@@ -44,6 +46,7 @@ const AdminDoctorListScreen = ({ navigation }: { navigation: any }) => {
         } finally {
             setLoading(false);
             setRefreshing(false);
+            setIsSearching(false);
         }
     };
 
@@ -117,7 +120,9 @@ const AdminDoctorListScreen = ({ navigation }: { navigation: any }) => {
                     value={searchText}
                     onChangeText={setSearchText}
                 />
-                {searchText ? (
+                {isSearching ? (
+                    <ActivityIndicator size="small" color="#2E7D32" style={{ padding: 4 }} />
+                ) : searchText ? (
                     <TouchableOpacity onPress={() => setSearchText('')}>
                         <FontAwesome5 name="times-circle" size={16} color="#ccc" />
                     </TouchableOpacity>

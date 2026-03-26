@@ -303,8 +303,8 @@ const deleteMedicine = async (medicineId) => {
 /* 
    ADMIN: LOW STOCK ALERT
  */
-const getLowStockMedicines = async () => {
-  const query = `
+const getLowStockMedicines = async (search = '') => {
+  let query = `
     SELECT 
       m.medicineid,
       m.name,
@@ -322,10 +322,17 @@ const getLowStockMedicines = async () => {
     FROM medicines m
     LEFT JOIN categories c ON m.categoryid = c.categoryid
     WHERE m.stock <= COALESCE(m.lowstockthreshold, 10)
-    ORDER BY m.stock ASC
   `;
 
-  const result = await pool.query(query);
+  const values = [];
+  if (search) {
+    query += ` AND (m.name ILIKE $1 OR c.name ILIKE $1)`;
+    values.push(`%${search}%`);
+  }
+
+  query += ` ORDER BY m.stock ASC`;
+
+  const result = await pool.query(query, values);
   return result.rows;
 };
 

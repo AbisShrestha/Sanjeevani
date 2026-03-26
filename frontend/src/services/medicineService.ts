@@ -77,7 +77,8 @@ export const updateMedicine = async (
 /* 
    GET LOW STOCK MEDICINES (ADMIN)
  */
-export const getLowStockMedicines = async () => {
-  const response = await api.get('/medicines/admin/low-stock');
+export const getLowStockMedicines = async (search = '') => {
+  const url = search ? `/medicines/admin/low-stock?search=${encodeURIComponent(search)}` : '/medicines/admin/low-stock';
+  const response = await api.get(url);
   return response.data;
 };

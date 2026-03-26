@@ -298,7 +298,8 @@ const deleteMedicine = async (req, res) => {
 */
 const getLowStockMedicines = async (req, res) => {
   try {
-    const medicines = await medicineModel.getLowStockMedicines();
+    const { search } = req.query;
+    const medicines = await medicineModel.getLowStockMedicines(search);
     res.json(medicines);
   } catch (error) {
     console.error(error);

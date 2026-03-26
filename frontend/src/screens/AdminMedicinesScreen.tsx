@@ -41,6 +41,7 @@ const AdminMedicinesScreen = ({ navigation }: { navigation: any }) => {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -56,7 +57,10 @@ const AdminMedicinesScreen = ({ navigation }: { navigation: any }) => {
 
   const loadMedicines = async (search = '') => {
     try {
-      setLoading(true);
+      if (!refreshing && !search && medicines.length === 0) {
+        setLoading(true);
+      }
+      if (search) setIsSearching(true);
       const data = await getAllMedicines({ search });
       setMedicines(Array.isArray(data) ? data : []);
     } catch {
@@ -64,6 +68,7 @@ const AdminMedicinesScreen = ({ navigation }: { navigation: any }) => {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setIsSearching(false);
     }
   };
 
@@ -171,7 +176,9 @@ const AdminMedicinesScreen = ({ navigation }: { navigation: any }) => {
           value={searchText}
           onChangeText={setSearchText}
         />
-        {searchText ? (
+        {isSearching ? (
+          <ActivityIndicator size="small" color="#2E7D32" style={{ padding: 4 }} />
+        ) : searchText ? (
           <TouchableOpacity onPress={() => setSearchText('')}>
             <FontAwesome5 name="times-circle" size={16} color="#ccc" />
           </TouchableOpacity>

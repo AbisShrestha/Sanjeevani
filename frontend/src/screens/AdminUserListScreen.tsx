@@ -21,12 +21,14 @@ const AdminUserListScreen = ({ navigation }: { navigation: any }) => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [searchText, setSearchText] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
 
     const fetchUsers = async (search = '') => {
         try {
-            if (!refreshing && !search) {
+            if (!refreshing && !search && users.length === 0) {
                 setLoading(true);
             }
+            if (search) setIsSearching(true);
             const res = await api.get(`/auth/users?search=${encodeURIComponent(search)}`);
             setUsers(res.data);
         } catch (error) {
@@ -35,6 +37,7 @@ const AdminUserListScreen = ({ navigation }: { navigation: any }) => {
         } finally {
             setLoading(false);
             setRefreshing(false);
+            setIsSearching(false);
         }
     };
 
@@ -150,14 +153,16 @@ const AdminUserListScreen = ({ navigation }: { navigation: any }) => {
                     value={searchText}
                     onChangeText={setSearchText}
                 />
-                {searchText ? (
+                {isSearching ? (
+                    <ActivityIndicator size="small" color="#00695C" style={{ padding: 4 }} />
+                ) : searchText ? (
                     <TouchableOpacity onPress={() => setSearchText('')}>
                         <FontAwesome5 name="times-circle" size={16} color="#ccc" />
                     </TouchableOpacity>
                 ) : null}
             </View>
 
-            {loading && !refreshing && !searchText ? (
+            {loading && !refreshing ? (
                 <ActivityIndicator size="large" color="#00695C" style={{ marginTop: 50 }} />
             ) : (
                 <FlatList

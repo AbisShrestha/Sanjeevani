@@ -50,10 +50,12 @@ const getMyOrders = async (req, res) => {
 /**
  * GET /api/orders
  * Fetch all orders for the admin.
+ * Supports: ?search=text
  */
 const getAllOrders = async (req, res) => {
   try {
-    const orders = await orderModel.getAllOrders();
+    const { search } = req.query;
+    const orders = await orderModel.getAllOrders(search);
     res.json(orders);
   } catch (error) {
     console.error('Error fetching all orders admin:', error);

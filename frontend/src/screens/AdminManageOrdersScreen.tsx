@@ -11,6 +11,7 @@ const AdminManageOrdersScreen = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -21,7 +22,11 @@ const AdminManageOrdersScreen = () => {
 
     const fetchOrders = async () => {
         try {
-            setLoading(true);
+            if (!refreshing && !debouncedSearch && orders.length === 0) {
+                setLoading(true);
+            }
+            if (debouncedSearch) setIsSearching(true);
+            
             const data = await getAllOrders(debouncedSearch);
             setOrders(data);
         } catch (error) {
@@ -30,6 +35,7 @@ const AdminManageOrdersScreen = () => {
         } finally {
             setLoading(false);
             setRefreshing(false);
+            setIsSearching(false);
         }
     };
 
@@ -152,14 +158,16 @@ const AdminManageOrdersScreen = () => {
                     value={searchText}
                     onChangeText={setSearchText}
                 />
-                {searchText ? (
+                {isSearching ? (
+                    <ActivityIndicator size="small" color="#00695C" style={{ padding: 4 }} />
+                ) : searchText ? (
                     <TouchableOpacity onPress={() => setSearchText('')} style={{ padding: 4 }}>
                         <FontAwesome5 name="times-circle" size={16} color="#ccc" />
                     </TouchableOpacity>
                 ) : null}
             </View>
 
-            {loading && !refreshing && !searchText ? (
+            {loading && !refreshing ? (
                 <View style={[styles.center, { marginTop: 50 }]}>
                     <ActivityIndicator size="large" color="#00695C" />
                 </View>
