@@ -93,6 +93,47 @@ const deleteInsight = async (req, res) => {
     }
 };
 
+// ADMIN: Delete any insight regardless of author
+const adminDeleteInsight = async (req, res) => {
+    try {
+        const insightId = req.params.id;
+        const query = `DELETE FROM articles WHERE articleid = $1 RETURNING articleid as id;`;
+        const result = await pool.query(query, [insightId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Insight not found' });
+        }
+        res.json({ message: 'Insight deleted successfully' });
+    } catch (error) {
+        console.error('Admin delete insight error:', error);
+        res.status(500).json({ message: 'Failed to delete insight' });
+    }
+};
+
+// ADMIN: Update any insight
+const adminUpdateInsight = async (req, res) => {
+    try {
+        const insightId = req.params.id;
+        const { title, content, imageUrl } = req.body;
+
+        const query = `
+            UPDATE articles
+            SET title = COALESCE($1, title), content = COALESCE($2, content), imageurl = COALESCE($3, imageurl)
+            WHERE articleid = $4
+            RETURNING articleid as id, title, content, imageurl as image_url, createdat as created_at;
+        `;
+        const result = await pool.query(query, [title, content, imageUrl, insightId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Insight not found' });
+        }
+        res.json({ message: 'Insight updated successfully', insight: result.rows[0] });
+    } catch (error) {
+        console.error('Admin update insight error:', error);
+        res.status(500).json({ message: 'Failed to update insight' });
+    }
+};
+
 /* 
   ==================
   APPOINTMENTS -> mapped to `consultations`
@@ -313,6 +354,8 @@ module.exports = {
     getMyInsights,
     getAllInsights,
     deleteInsight,
+    adminDeleteInsight,
+    adminUpdateInsight,
     createAppointment,
     getMyAppointmentsAsDoctor,
     getMyAppointmentsAsPatient,

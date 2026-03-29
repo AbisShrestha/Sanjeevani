@@ -20,6 +20,12 @@ router.get('/records/me', verifyToken, doctorFeaturesController.getMyRecordsAsPa
 router.post('/appointments', verifyToken, doctorFeaturesController.createAppointment);
 
 // ==============================
+// ADMIN ROUTES
+// ==============================
+router.put('/insights/:id', verifyToken, authorizeRoles('admin'), doctorFeaturesController.adminUpdateInsight);
+router.delete('/insights/admin/:id', verifyToken, authorizeRoles('admin'), doctorFeaturesController.adminDeleteInsight);
+
+// ==============================
 // DOCTOR ONLY ROUTES
 // ==============================
 
