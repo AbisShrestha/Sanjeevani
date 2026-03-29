@@ -70,12 +70,12 @@ const getAllDoctors = async (req, res) => {
             const result = await pool.query(
                 `SELECT * FROM doctors 
                  WHERE name ILIKE $1 OR specialty ILIKE $1 OR hospital ILIKE $1
-                 ORDER BY id DESC`,
+                 ORDER BY name ASC`,
                 [queryRaw]
             );
             allDoctors = result.rows;
         } else {
-            const result = await pool.query('SELECT * FROM doctors ORDER BY id DESC');
+            const result = await pool.query('SELECT * FROM doctors ORDER BY name ASC');
             allDoctors = result.rows;
         }
 
