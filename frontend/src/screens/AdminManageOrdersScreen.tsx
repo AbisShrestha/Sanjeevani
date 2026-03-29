@@ -118,7 +118,7 @@ const AdminManageOrdersScreen = () => {
                 {parsedItems.map((prod: any, idx: number) => (
                     <View key={idx} style={styles.productRow}>
                         <Text style={styles.productName}>{prod.quantity}x {prod.name}</Text>
-                        <Text style={styles.productPrice}>₹{prod.price}</Text>
+                        <Text style={styles.productPrice}>Rs. {prod.price}</Text>
                     </View>
                 ))}
 
@@ -126,7 +126,7 @@ const AdminManageOrdersScreen = () => {
 
                 <View style={styles.footerRow}>
                     <Text style={styles.totalLabel}>Total Paid ({item.paymentmethod}):</Text>
-                    <Text style={styles.totalValue}>₹{item.totalamount}</Text>
+                    <Text style={styles.totalValue}>Rs. {item.totalamount}</Text>
                 </View>
 
                 <TouchableOpacity 

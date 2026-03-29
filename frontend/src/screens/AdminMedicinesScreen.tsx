@@ -138,7 +138,7 @@ const AdminMedicinesScreen = ({ navigation }: { navigation: any }) => {
                 {isLowStock ? 'Low Stock' : 'In Stock'}
               </Text>
             </View>
-            <Text className="text-[13px] text-[#555] mt-1">Price: ₹ {item.price}</Text>
+            <Text className="text-[13px] text-[#555] mt-1">Price: Rs. {item.price}</Text>
             <Text className="text-[13px] text-[#555]">Stock: {item.stock}</Text>
             <View className="flex-row justify-end mt-3">
               <TouchableOpacity

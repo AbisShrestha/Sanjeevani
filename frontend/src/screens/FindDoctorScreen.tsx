@@ -24,14 +24,13 @@ const FindDoctorScreen = ({ navigation }: { navigation: any }) => {
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [refreshing, setRefreshing] = useState(false);
+    
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
 
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
         fetchDoctors().then(() => setRefreshing(false));
-    }, []);
-
-    useEffect(() => {
-        fetchDoctors();
     }, []);
 
     // Filter when category changes
@@ -48,15 +47,37 @@ const FindDoctorScreen = ({ navigation }: { navigation: any }) => {
         setFilteredDoctors(result);
     }, [selectedCategory, doctors]);
 
-    const fetchDoctors = async () => {
+    // Initial load and Search Debounce
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            fetchDoctors(searchQuery);
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchQuery]);
+
+    const fetchDoctors = async (search = '') => {
         try {
-            const res = await api.get('/doctors');
+            if (!refreshing && !search && doctors.length === 0) setLoading(true);
+            if (search) setIsSearching(true);
+            
+            const res = await api.get(`/doctors?search=${encodeURIComponent(search)}`);
             setDoctors(res.data);
-            setFilteredDoctors(res.data);
+            
+            // Reapply category filter immediately if one is selected
+            let result = res.data;
+            if (selectedCategory !== 'All') {
+                result = result.filter((doc: any) =>
+                    doc.specialty && doc.specialty.toLowerCase().includes(selectedCategory.toLowerCase())
+                );
+            }
+            setFilteredDoctors(result);
         } catch (error) {
             console.error("Fetch doctors error:", error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
+            setIsSearching(false);
         }
     };
 
@@ -91,21 +112,41 @@ const FindDoctorScreen = ({ navigation }: { navigation: any }) => {
 
     return (
         <View className="flex-1 bg-[#F5F7FA]">
-            {/* Header */}
-            <View className={`bg-white shadow-sm flex-row items-center px-5 py-4 ${Platform.OS === 'ios' ? 'pt-12' : ''} mb-2`}>
-                <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2">
-                    <FontAwesome5 name="arrow-left" size={20} color="#37474F" />
-                </TouchableOpacity>
-                <Text className="text-xl font-bold text-[#37474F] ml-4">Find A Doctor</Text>
+            {/* SEARCH BAR */}
+            <View className={`bg-[#00695C] pt-[50px] pb-4 px-5 rounded-b-[20px] shadow-sm z-10 ${Platform.OS === 'android' ? 'pt-12' : ''}`}>
+                <View className="flex-row items-center mb-4">
+                    <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
+                        <FontAwesome5 name="arrow-left" size={20} color="#fff" />
+                    </TouchableOpacity>
+                    <Text className="text-[22px] font-bold text-white">Find a Consultant</Text>
+                </View>
+                
+                <View className="bg-white/10 p-3 rounded-xl flex-row items-center border border-white/20">
+                    <FontAwesome5 name="search" size={16} color="rgba(255,255,255,0.7)" />
+                    <TextInput
+                        className="flex-1 ml-3 text-[15px] text-white"
+                        placeholder="Search doctors, specialties..."
+                        placeholderTextColor="rgba(255,255,255,0.5)"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                    />
+                    {isSearching ? (
+                        <ActivityIndicator size="small" color="#fff" style={{ padding: 4 }} />
+                    ) : searchQuery ? (
+                        <TouchableOpacity onPress={() => setSearchQuery('')}>
+                            <FontAwesome5 name="times-circle" size={16} color="rgba(255,255,255,0.7)" />
+                        </TouchableOpacity>
+                    ) : null}
+                </View>
             </View>
 
-            <View className="px-4 pt-4">
-                {/* Categories */}
-                <View className="h-[45px] mb-2">
-                    <FlatList
+            {/* CATEGORY BAR */}
+            <View className="py-4 bg-[#F5F7FA] border-b border-[#E0E0E0] z-0">
+                <FlatList
                         data={CATEGORIES}
                         horizontal
                         showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{ paddingHorizontal: 15 }}
                         renderItem={({ item }) => (
                             <TouchableOpacity
                                 className={`px-5 py-2 rounded-full mr-2.5 border ${selectedCategory === item ? 'bg-[#00695C] border-[#00695C]' : 'bg-white border-[#E0E0E0]'}`}
@@ -118,7 +159,6 @@ const FindDoctorScreen = ({ navigation }: { navigation: any }) => {
                         )}
                         keyExtractor={item => item}
                     />
-                </View>
             </View>
 
             {/* Content */}

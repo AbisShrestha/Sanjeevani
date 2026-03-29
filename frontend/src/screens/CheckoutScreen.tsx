@@ -178,7 +178,7 @@ const CheckoutScreen = ({ navigation }: { navigation: any }) => {
         <View className="bg-white p-5 rounded-2xl shadow-sm mb-6 flex-row justify-between items-center border border-[#E0F2F1]">
           <View>
             <Text className="text-[13px] font-bold text-[#78909C] uppercase tracking-wider mb-1">Order Total ({cartItems.length} Items)</Text>
-            <Text className="text-2xl font-extrabold text-[#00695C]">₹ {totalPrice.toFixed(2)}</Text>
+            <Text className="text-2xl font-extrabold text-[#00695C]">Rs. {totalPrice.toFixed(2)}</Text>
           </View>
           <TouchableOpacity 
             className="bg-[#E0F2F1] px-4 py-2.5 rounded-xl flex-row items-center border border-[#B2DFDB]"
@@ -290,7 +290,7 @@ const CheckoutScreen = ({ navigation }: { navigation: any }) => {
           ) : (
             <>
               <Text className="text-white font-bold text-lg tracking-wide mr-2">
-                Place Order (₹ {totalPrice.toFixed(2)})
+                Place Order (Rs. {totalPrice.toFixed(2)})
               </Text>
               <FontAwesome5 name="check-circle" size={18} color="#fff" />
             </>

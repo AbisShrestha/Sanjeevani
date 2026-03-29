@@ -127,7 +127,7 @@ const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: 
                         <Text style={styles.doctorName}>Dr. {doctor.name}</Text>
                         <Text style={styles.doctorSpecialty}>{doctor.specialty}</Text>
                         <View style={styles.feeBadge}>
-                            <Text style={styles.feeText}>₹{doctor.fee || '500'} / session</Text>
+                            <Text style={styles.feeText}>Rs. {doctor.fee || '500'} / session</Text>
                         </View>
                     </View>
                 </View>
@@ -184,12 +184,12 @@ const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: 
                             </View>
                             <View style={styles.summaryRow}>
                                 <Text style={styles.summaryLabel}>Consultation Fee</Text>
-                                <Text style={styles.summaryValue}>₹{doctor.fee || '500'}</Text>
+                                <Text style={styles.summaryValue}>Rs. {doctor.fee || '500'}</Text>
                             </View>
                             <View style={styles.divider} />
                             <View style={styles.summaryRow}>
                                 <Text style={[styles.summaryLabel, { fontWeight: 'bold', color: '#333' }]}>Total Payable</Text>
-                                <Text style={[styles.summaryValue, { fontWeight: 'bold', fontSize: 18, color: '#00695C' }]}>₹{doctor.fee || '500'}</Text>
+                                <Text style={[styles.summaryValue, { fontWeight: 'bold', fontSize: 18, color: '#00695C' }]}>Rs. {doctor.fee || '500'}</Text>
                             </View>
                         </View>
 
@@ -222,7 +222,7 @@ const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: 
                         {isSubmitting ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
-                            <Text style={styles.primaryBtnText}>Pay ₹{doctor.fee || '500'} & Book</Text>
+                            <Text style={styles.primaryBtnText}>Pay Rs. {doctor.fee || '500'} & Book</Text>
                         )}
                     </TouchableOpacity>
                 )}

@@ -81,7 +81,7 @@ const MedicineItem = React.memo(({ item, viewMode, onNavigate, onAddToCart }: an
                     <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
                     <Text style={styles.itemCategory}>Ayurvedic</Text>
                     <View style={styles.priceRow}>
-                        <Text style={styles.itemPrice}>₹{item.price}</Text>
+                        <Text style={styles.itemPrice}>Rs. {item.price}</Text>
                     </View>
                     <Pressable
                         style={styles.addButton}
@@ -114,7 +114,7 @@ const MedicineItem = React.memo(({ item, viewMode, onNavigate, onAddToCart }: an
                     </Text>
                 </View>
                 <View style={styles.listFooter}>
-                    <Text style={styles.itemPrice}>₹ {item.price}</Text>
+                    <Text style={styles.itemPrice}>Rs. {item.price}</Text>
                     <Pressable
                         style={styles.addToCartButton}
                         onPress={() => onAddToCart(item)}
@@ -141,6 +141,10 @@ const SanjeevaniStoreScreen = (props: any) => {
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [sortBy, setSortBy] = useState<'none' | 'lowHigh' | 'highLow'>('none');
+    
+    // Search state
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
     const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Fetch Data from Server (with search/filter/sort query params)
@@ -157,7 +161,7 @@ const SanjeevaniStoreScreen = (props: any) => {
                 : [];
             
             // If no filters, also update the main medicines list (for category tabs)
-            if (!params || (!params.search && !params.category && !params.sort)) {
+            if (!params || (!params.search && !params.category && (!params.sort || params.sort === 'none'))) {
                 setMedicines(validData);
             }
             setFilteredMedicines(validData);
@@ -167,6 +171,7 @@ const SanjeevaniStoreScreen = (props: any) => {
         } finally {
             setLoading(false);
             setRefreshing(false);
+            setIsSearching(false);
         }
     }, []);
 
@@ -179,17 +184,20 @@ const SanjeevaniStoreScreen = (props: any) => {
     useEffect(() => {
         if (debounceTimer.current) clearTimeout(debounceTimer.current);
         
+        if (searchQuery) setIsSearching(true);
+
         debounceTimer.current = setTimeout(() => {
             fetchMedicines({
+                search: searchQuery,
                 category: selectedCategory,
                 sort: sortBy,
             });
-        }, 300);
+        }, 400);
 
         return () => {
             if (debounceTimer.current) clearTimeout(debounceTimer.current);
         };
-    }, [selectedCategory, sortBy]);
+    }, [searchQuery, selectedCategory, sortBy]);
 
     // Derived Categories
     const derivedCategories = useMemo(() => {
@@ -235,22 +243,43 @@ const SanjeevaniStoreScreen = (props: any) => {
         <View style={styles.screenContainer}>
             <StatusBar barStyle="light-content" backgroundColor="#00695C" />
 
-            {/* HEADER - USING NATIVEWIND HERE IS OKAY, IT'S STATIC */}
-            <View className={`bg-[#00695C] pb-5 px-5 flex-row justify-between items-center shadow-lg ${Platform.OS === 'ios' ? 'pt-[50px]' : 'pt-5'}`}>
-                <View className="flex-row items-center">
-                    <Pressable onPress={() => navigation && navigation.navigate('Home')} className="mr-[15px]">
-                        <FontAwesome5 name="arrow-left" size={20} color="#fff" />
+            {/* HEADER - WITH SEARCH BAR */}
+            <View className={`bg-[#00695C] pb-4 px-5 pt-[50px] shadow-lg rounded-b-[20px] z-20 ${Platform.OS === 'android' ? 'pt-12' : ''}`}>
+                <View className="flex-row justify-between items-center mb-4">
+                    <View className="flex-row items-center">
+                        <Pressable onPress={() => navigation && navigation.navigate('Home')} className="mr-[15px]">
+                            <FontAwesome5 name="arrow-left" size={20} color="#fff" />
+                        </Pressable>
+                        <Text className="text-[22px] font-bold text-white tracking-wide">Sanjeevani Store</Text>
+                    </View>
+                    <Pressable onPress={() => navigation && navigation.navigate('Cart')} className="p-1.5 relative">
+                        <FontAwesome5 name="shopping-cart" size={22} color="#fff" />
+                        {cartCount > 0 && (
+                            <View className="absolute -top-1 -right-1 bg-[#EF5350] rounded-full w-[18px] h-[18px] justify-center items-center border-[1.5px] border-[#00695C]">
+                                <Text className="text-white text-[9px] font-bold">{cartCount}</Text>
+                            </View>
+                        )}
                     </Pressable>
-                    <Text className="text-[22px] font-bold text-white">Sanjeevani Store</Text>
                 </View>
-                <Pressable onPress={() => navigation && navigation.navigate('Cart')} className="p-1.5">
-                    <FontAwesome5 name="shopping-cart" size={22} color="#fff" />
-                    {cartCount > 0 && (
-                        <View className="absolute -top-2 -right-2 bg-[#EF5350] rounded-full w-[18px] h-[18px] justify-center items-center border-[1.5px] border-white">
-                            <Text className="text-white text-[9px] font-bold">{cartCount}</Text>
-                        </View>
-                    )}
-                </Pressable>
+
+                {/* SEARCH INPUT */}
+                <View className="bg-white/10 p-3 rounded-xl flex-row items-center border border-white/20">
+                    <FontAwesome5 name="search" size={16} color="rgba(255,255,255,0.7)" />
+                    <TextInput
+                        className="flex-1 ml-3 text-[15px] text-white"
+                        placeholder="Search medicines, herbs, categories..."
+                        placeholderTextColor="rgba(255,255,255,0.5)"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                    />
+                    {isSearching ? (
+                        <ActivityIndicator size="small" color="#fff" style={{ padding: 4 }} />
+                    ) : searchQuery ? (
+                        <Pressable onPress={() => setSearchQuery('')}>
+                            <FontAwesome5 name="times-circle" size={16} color="rgba(255,255,255,0.7)" />
+                        </Pressable>
+                    ) : null}
+                </View>
             </View>
 
             <View className="bg-white pb-2.5 border-b border-[#eee] shadow-sm z-10 pt-4">

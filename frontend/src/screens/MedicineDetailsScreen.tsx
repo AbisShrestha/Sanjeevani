@@ -98,7 +98,7 @@ const MedicineDetailsScreen = ({ navigation, route }: { navigation: any; route: 
                         <View style={{ flex: 1, marginRight: 16 }}>
                             <Text style={{ fontSize: 26, fontWeight: 'bold', color: '#263238', lineHeight: 32 }}>{medicine.name}</Text>
                         </View>
-                        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#00695C' }}>₹ {medicine.price}</Text>
+                        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#00695C' }}>Rs. {medicine.price}</Text>
                     </View>
 
                     {/* Category Chip */}

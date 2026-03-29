@@ -385,7 +385,7 @@ const UserProfileScreen = ({ navigation }: { navigation: any }) => {
             <View className="flex-row items-center p-4">
               <FontAwesome5 name="calendar" size={16} color="#00695C" />
               <Text className="text-[15px] text-[#37474F] ml-3 font-medium flex-1">
-                Joined {profile?.createdat ? new Date(profile.createdat).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}
+                Joined {(profile?.createdAt || profile?.createdat) ? new Date(profile.createdAt || profile.createdat).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}
               </Text>
             </View>
           </View>

@@ -85,7 +85,7 @@ const MyOrdersScreen = () => {
         <View className="flex-row justify-between items-center">
           <View>
             <Text className="text-[11px] font-bold text-[#90A4AE] uppercase tracking-wider mb-0.5">Total Amount</Text>
-            <Text className="text-lg font-extrabold text-[#00695C]">₹ {Number(item.totalamount).toFixed(2)}</Text>
+            <Text className="text-lg font-extrabold text-[#00695C]">Rs. {Number(item.totalamount).toFixed(2)}</Text>
           </View>
           <View className="items-end">
              <Text className="text-[11px] font-bold text-[#90A4AE] uppercase tracking-wider mb-0.5">Payment</Text>

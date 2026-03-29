@@ -79,7 +79,7 @@ const CartScreen = ({ navigation }: { navigation: any }) => {
                 <Text className="text-base font-bold text-[#333] mb-1 leading-5" numberOfLines={1}>
                     {item.name}
                 </Text>
-                <Text className="text-sm font-bold text-[#00695C]">₹ {item.price}</Text>
+                <Text className="text-sm font-bold text-[#00695C]">Rs. {item.price}</Text>
             </View>
 
             {/* Quantity Controls */}
@@ -150,7 +150,7 @@ const CartScreen = ({ navigation }: { navigation: any }) => {
                 <View className="absolute bottom-0 left-0 right-0 bg-white p-5 rounded-t-[24px] shadow-2xl pb-8">
                     <View className="flex-row justify-between mb-6">
                         <Text className="text-lg font-semibold text-[#546E7A]">Total Amount:</Text>
-                        <Text className="text-2xl font-bold text-[#00695C]">₹ {totalPrice}</Text>
+                        <Text className="text-2xl font-bold text-[#00695C]">Rs. {totalPrice}</Text>
                     </View>
                     <TouchableOpacity
                         className="bg-[#00695C] py-4 rounded-xl items-center shadow-lg active:bg-[#004D40]"

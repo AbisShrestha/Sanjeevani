@@ -127,7 +127,7 @@ const DoctorDetailsScreen = ({ navigation, route }: { navigation: any; route: an
             <View className="absolute bottom-0 left-0 right-0 bg-white p-5 flex-row justify-between items-center shadow-2xl border-t border-[#f0f0f0]">
                 <View>
                     <Text className="text-xs text-[#90A4AE] mb-0.5">Consultation Fee</Text>
-                    <Text className="text-xl font-bold text-[#263238]">₹500</Text>
+                    <Text className="text-xl font-bold text-[#263238]">Rs. 500</Text>
                 </View>
                 <TouchableOpacity
                     className="bg-[#00695C] px-8 py-3.5 rounded-full shadow-lg active:bg-[#004D40]"

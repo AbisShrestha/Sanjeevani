@@ -210,7 +210,7 @@ const UserHomeScreen = ({ navigation }: { navigation: any }) => {
                     <Text className="text-sm font-bold text-[#333] mb-0.5" numberOfLines={1}>{med.name}</Text>
                     <Text className="text-[10px] font-semibold text-[#00695C] mb-2">Ayurvedic</Text>
                     <View className="flex-row justify-between items-center">
-                      <Text className="text-sm font-extrabold text-[#2E7D32]">₹{med.price}</Text>
+                      <Text className="text-sm font-extrabold text-[#2E7D32]">Rs. {med.price}</Text>
                       <TouchableOpacity 
                         className="bg-[#00695C] p-1.5 rounded-full"
                         onPress={() => addToCart(med)}
@@ -256,7 +256,7 @@ const UserHomeScreen = ({ navigation }: { navigation: any }) => {
                     <Text className="text-[13px] font-extrabold text-[#333] mb-0.5" numberOfLines={1}>Dr. {doc.name}</Text>
                     <Text className="text-[11px] text-[#666] mb-2">{doc.specialization}</Text>
                     <View className="bg-[#E0F2F1] px-3 py-1.5 rounded-full w-full items-center">
-                       <Text className="text-[#00695C] text-[10px] font-bold">FEES: ₹{doc.consultationfee}</Text>
+                       <Text className="text-[#00695C] text-[10px] font-bold">FEES: Rs. {doc.consultationfee}</Text>
                     </View>
                   </View>
                 </TouchableOpacity>

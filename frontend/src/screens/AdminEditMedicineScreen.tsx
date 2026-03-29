@@ -146,7 +146,7 @@ const AdminEditMedicineScreen = ({ navigation, route }: { navigation: any; route
 
           <View className="flex-row justify-between">
             <View className="w-[48%]">
-              <Text className="text-xs font-bold text-[#666] uppercase mb-1">Price (₹)</Text>
+              <Text className="text-xs font-bold text-[#666] uppercase mb-1">Price (Rs. )</Text>
               <TextInput
                 className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base"
                 value={price}
