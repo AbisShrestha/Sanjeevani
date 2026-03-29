@@ -27,12 +27,16 @@ export interface Order {
 export const placeOrder = async (
   totalAmount: number,
   shippingAddress: string,
-  items: { medicineid: number; quantity: number; price: number }[]
+  items: { medicineid: number; quantity: number; price: number }[],
+  paymentStatus?: string,
+  orderStatus?: string
 ) => {
   const response = await api.post('/orders', {
     totalAmount,
     shippingAddress,
     items,
+    paymentStatus,
+    orderStatus
   });
   return response.data;
 };
@@ -42,5 +46,13 @@ export const placeOrder = async (
  */
 export const getMyOrders = async (): Promise<Order[]> => {
   const response = await api.get('/orders/my-orders');
+  return response.data;
+};
+
+/**
+ * Cancel a pending order (e.g. if eSewa fails/is closed)
+ */
+export const cancelOrder = async (orderId: number) => {
+  const response = await api.delete(`/orders/${orderId}/cancel`);
   return response.data;
 };

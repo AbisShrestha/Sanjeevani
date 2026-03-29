@@ -110,6 +110,39 @@ const verifyPayment = async (req, res) => {
       }
     );
 
+    const pool = require('../config/db');
+
+    if (verifyResponse.data.status === 'COMPLETE') {
+      const txn = decodedData.transaction_uuid;
+      
+      if (txn.startsWith('ORDER-')) {
+        const orderId = txn.replace('ORDER-', '');
+        try {
+          await pool.query(
+            "UPDATE orders SET paymentstatus = 'Completed', orderstatus = 'Processing' WHERE orderid = $1", 
+            [orderId]
+          );
+        } catch (dbErr) {
+          console.error("Critical: Failed to update order status post-payment", dbErr);
+        }
+      } 
+      else if (txn.startsWith('APT-')) {
+        // Example format: APT-{consultationId}-{timestamp}
+        const parts = txn.split('-');
+        if (parts.length >= 2) {
+          const consultationId = parts[1];
+          try {
+            await pool.query(
+              "UPDATE consultations SET status = 'scheduled' WHERE consultationid = $1", 
+              [consultationId]
+            );
+          } catch (dbErr) {
+            console.error("Critical: Failed to update consultation status post-payment", dbErr);
+          }
+        }
+      }
+    }
+
     res.json({
       status: verifyResponse.data.status,
       transactionData: decodedData,

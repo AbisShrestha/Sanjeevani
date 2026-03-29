@@ -16,6 +16,9 @@ router.get('/appointments/me', verifyToken, doctorFeaturesController.getMyAppoin
 // View user's own health records
 router.get('/records/me', verifyToken, doctorFeaturesController.getMyRecordsAsPatient);
 
+// User checks if appointment is available before paying
+router.post('/appointments/check', verifyToken, doctorFeaturesController.checkAppointmentAvailability);
+
 // User books an appointment with a doctor
 router.post('/appointments', verifyToken, doctorFeaturesController.createAppointment);
 

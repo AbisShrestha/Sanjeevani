@@ -140,6 +140,38 @@ const adminUpdateInsight = async (req, res) => {
   userid, doctorid, scheduledat, meetinglink, status
   ==================
 */
+const checkAppointmentAvailability = async (req, res) => {
+    try {
+        let { doctorId, appointmentDate } = req.body;
+        if (!doctorId || !appointmentDate) {
+            return res.status(400).json({ message: 'Doctor and date are required' });
+        }
+
+        let finalDoctorId = doctorId;
+        if (typeof doctorId === 'string' && doctorId.startsWith('u-')) {
+            finalDoctorId = parseInt(doctorId.replace('u-', ''), 10);
+        } else {
+            finalDoctorId = parseInt(doctorId, 10);
+        }
+
+        const checkQuery = `
+            SELECT consultationid FROM consultations 
+            WHERE doctorid = $1 
+            AND scheduledat = $2 
+            AND status != 'cancelled'
+        `;
+        const checkResult = await pool.query(checkQuery, [finalDoctorId, appointmentDate]);
+        
+        if (checkResult.rows.length > 0) {
+            return res.status(409).json({ available: false, message: 'This time slot is already booked.' });
+        }
+        res.json({ available: true });
+    } catch (error) {
+        console.error('Check availability error:', error);
+        res.status(500).json({ message: 'Failed to verify slot availability' });
+    }
+};
+
 const createAppointment = async (req, res) => {
     try {
         const { doctorId, appointmentDate, reason } = req.body;
@@ -157,6 +189,21 @@ const createAppointment = async (req, res) => {
         } else {
             // Must be a registered user to book a video consultation
             finalDoctorId = parseInt(doctorId, 10);
+        }
+
+        // ==========================================
+        // 1. Double-Booking Validation
+        // ==========================================
+        const checkQuery = `
+            SELECT consultationid FROM consultations 
+            WHERE doctorid = $1 
+            AND scheduledat = $2 
+            AND status != 'cancelled'
+        `;
+        const checkResult = await pool.query(checkQuery, [finalDoctorId, appointmentDate]);
+        
+        if (checkResult.rows.length > 0) {
+            return res.status(409).json({ message: 'This time slot is already booked. Please select another time.' });
         }
 
         const jitsiLink = `https://meet.jit.si/Sanjeevani-${finalDoctorId}-${patientId}-${timestamp}`;
@@ -350,6 +397,7 @@ const getDoctorRecordsForPatient = async (req, res) => {
 };
 
 module.exports = {
+    checkAppointmentAvailability,
     createInsight,
     getMyInsights,
     getAllInsights,

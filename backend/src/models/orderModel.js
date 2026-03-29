@@ -39,7 +39,7 @@ const createOrderTable = async () => {
 /**
  * CREATE A NEW ORDER
  */
-const createOrder = async (userId, totalAmount, shippingAddress, items) => {
+const createOrder = async (userId, totalAmount, shippingAddress, items, paymentStatus = 'Completed', orderStatus = 'Processing') => {
   const client = await pool.connect();
   try {
     // 1. Start transaction
@@ -47,25 +47,39 @@ const createOrder = async (userId, totalAmount, shippingAddress, items) => {
 
     // 2. Insert into orders table
     const orderResult = await client.query(
-      `INSERT INTO orders (userid, totalamount, shippingaddress)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [userId, totalAmount, shippingAddress]
+      `INSERT INTO orders (userid, totalamount, shippingaddress, paymentstatus, orderstatus)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [userId, totalAmount, shippingAddress, paymentStatus, orderStatus]
     );
     const newOrder = orderResult.rows[0];
 
-    // 3. Insert into order_items table and reduce stock
+    // 3. Insert into order_items table and reduce stock safely
     for (const item of items) {
-      // Find the medicine price (optional safety check, we'll just trust the frontend price for now or look it up)
-      // For precision, ideally we check real DB price, but we will use item.price passed from cart
+      // 3a. Lock the medicine row to prevent concurrent overselling
+      const stockCheck = await client.query(
+        `SELECT stock, name FROM medicines WHERE medicineid = $1 FOR UPDATE`,
+        [item.medicineid]
+      );
+      
+      if (stockCheck.rows.length === 0) {
+        throw new Error(`Medicine ID ${item.medicineid} not found.`);
+      }
+
+      const currentStock = stockCheck.rows[0].stock;
+      if (currentStock < item.quantity) {
+        throw new Error(`Insufficient stock for ${stockCheck.rows[0].name}. Only ${currentStock} available.`);
+      }
+
+      // 3b. Insert order item
       await client.query(
         `INSERT INTO order_items (orderid, medicineid, quantity, price)
          VALUES ($1, $2, $3, $4)`,
         [newOrder.orderid, item.medicineid, item.quantity, item.price]
       );
 
-      // Reduce stock safely (prevent negative stock on checkout)
+      // 3c. Reduce stock
       await client.query(
-        `UPDATE medicines SET stock = GREATEST(stock - $1, 0) WHERE medicineid = $2`,
+        `UPDATE medicines SET stock = stock - $1 WHERE medicineid = $2`,
         [item.quantity, item.medicineid]
       );
     }

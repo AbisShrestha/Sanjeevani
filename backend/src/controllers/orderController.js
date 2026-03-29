@@ -6,7 +6,7 @@ const orderModel = require('../models/orderModel');
  */
 const placeOrder = async (req, res) => {
   try {
-    const { totalAmount, shippingAddress, items } = req.body;
+    const { totalAmount, shippingAddress, items, paymentStatus, orderStatus } = req.body;
     
     // User is extracted from auth middleware
     const userId = req.user.userId;
@@ -19,13 +19,23 @@ const placeOrder = async (req, res) => {
       return res.status(400).json({ error: 'Shipping address is required' });
     }
 
-    const newOrder = await orderModel.createOrder(userId, totalAmount, shippingAddress, items);
+    const newOrder = await orderModel.createOrder(
+        userId, 
+        totalAmount, 
+        shippingAddress, 
+        items, 
+        paymentStatus || 'Completed', 
+        orderStatus || 'Processing'
+    );
 
     res.status(201).json({
       message: 'Order created successfully',
       order: newOrder,
     });
   } catch (error) {
+    if (error.message && (error.message.includes('Insufficient stock') || error.message.includes('not found'))) {
+        return res.status(400).json({ error: error.message });
+    }
     console.error('Error placing order:', error);
     res.status(500).json({ error: 'Internal server error while placing order' });
   }
@@ -88,9 +98,42 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+const cancelOrder = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const userId = req.user.userId;
+    const pool = require('../config/db');
+
+    // Make sure the order belongs to the user and is 'Pending Payment'
+    const orderCheck = await pool.query("SELECT orderstatus FROM orders WHERE orderid = $1 AND userid = $2", [orderId, userId]);
+    if (orderCheck.rows.length === 0) {
+        return res.status(404).json({ error: 'Order not found' });
+    }
+
+    if (orderCheck.rows[0].orderstatus !== 'Pending Payment') {
+        return res.status(400).json({ error: 'Only pending orders can be cancelled automatically' });
+    }
+
+    // 1. Mark as cancelled
+    await pool.query("UPDATE orders SET paymentstatus = 'Cancelled', orderstatus = 'Cancelled' WHERE orderid = $1", [orderId]);
+
+    // 2. Restore stock
+    const items = await pool.query("SELECT medicineid, quantity FROM order_items WHERE orderid = $1", [orderId]);
+    for (const item of items.rows) {
+        await pool.query("UPDATE medicines SET stock = stock + $1 WHERE medicineid = $2", [item.quantity, item.medicineid]);
+    }
+
+    res.json({ message: 'Order cancelled and stock restored' });
+  } catch (error) {
+    console.error('Error cancelling order:', error);
+    res.status(500).json({ error: 'Failed to cancel order' });
+  }
+};
+
 module.exports = {
   placeOrder,
   getMyOrders,
   getAllOrders,
   updateOrderStatus,
+  cancelOrder,
 };

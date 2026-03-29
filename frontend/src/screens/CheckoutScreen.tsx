@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCart } from '../context/CartContext';
 import { initiateEsewaPayment, generateEsewaFormHTML, verifyEsewaPayment } from '../services/esewaService';
-import { placeOrder } from '../services/orderService';
+import { placeOrder, cancelOrder } from '../services/orderService';
 import { WebView } from 'react-native-webview';
 
 const CheckoutScreen = ({ navigation }: { navigation: any }) => {
@@ -26,6 +26,7 @@ const CheckoutScreen = ({ navigation }: { navigation: any }) => {
   
   const [loading, setLoading] = useState(false);
   const [esewaHtmlConfig, setEsewaHtmlConfig] = useState<string | null>(null);
+  const [pendingOrderId, setPendingOrderId] = useState<number | null>(null);
 
   // Contact Info
   const [fullName, setFullName] = useState('');
@@ -65,9 +66,32 @@ const CheckoutScreen = ({ navigation }: { navigation: any }) => {
 
     try {
       setLoading(true);
-      const purchaseId = `ORDER-${Date.now()}`;
 
-      // 2. Initiate eSewa Payment
+      // 2. Pre-create the order as "Pending" to reserve inventory and secure a database record
+      let newOrder;
+      try {
+        newOrder = await placeOrder(
+            totalPrice,
+            address,
+            cartItems.map(item => ({
+              medicineid: item.medicineid,
+              quantity: item.quantity,
+              price: item.price
+            })),
+            'Pending Payment',
+            'Pending Payment'
+        );
+        setPendingOrderId(newOrder.order.orderid);
+      } catch (orderErr: any) {
+        const errorMessage = orderErr.response?.data?.error || 'Failed to initialize order. Please try again.';
+        Alert.alert('Checkout Failed', errorMessage);
+        setLoading(false);
+        return;
+      }
+
+      // 3. Initiate eSewa Payment
+      // Pass the actual Postgres order ID as the transaction UUID so the backend verifier knows which order to update!
+      const purchaseId = `ORDER-${newOrder.order.orderid}`;
       const esewaResponse = await initiateEsewaPayment(
         totalPrice,
         purchaseId,
@@ -101,31 +125,11 @@ const CheckoutScreen = ({ navigation }: { navigation: any }) => {
         const encodedData = urlObj.searchParams.get('data');
         
         if (encodedData) {
-          // 1. Verify payment with eSewa API
+          // 1. Verify payment with eSewa API (Our backend will auto-upgrade the DB order status!)
           await verifyEsewaPayment(encodedData);
+          setPendingOrderId(null); // Success, so clear the pending tracker
           
-          // 2. Persist order to PostgreSQL
-          try {
-            await placeOrder(
-              totalPrice,
-              address,
-              cartItems.map(item => ({
-                medicineid: item.medicineid,
-                quantity: item.quantity,
-                price: item.price
-              }))
-            );
-          } catch (orderError) {
-            console.error("Critical: Payment verified but order failed to save!", orderError);
-            Alert.alert(
-              'Technical Glitch! ⚠️',
-              'Your payment was successful, but we encountered an error saving your order details. Please take a screenshot of your eSewa receipt and contact our support immediately.',
-              [{ text: 'Contact Support', onPress: () => navigation.navigate('ChatBot') }]
-            );
-            return;
-          }
-          
-          // 3. Success Alert & Clear Cart
+          // 2. Success Alert & Clear Cart
           Alert.alert(
             'Order Placed Successfully! 🎉',
             `Thank you ${fullName.split(' ')[0]}, your order has been received and will be shipped to ${address}.\n\nPayment Method: eSewa`,
@@ -152,6 +156,17 @@ const CheckoutScreen = ({ navigation }: { navigation: any }) => {
       }
     } else if (url.includes('sanjeevani-health.com/payment/failure') || url.includes('/cancel')) {
       setEsewaHtmlConfig(null);
+      
+      // Cancel the pending order to restore the medicine stock!
+      if (pendingOrderId) {
+          try {
+              await cancelOrder(pendingOrderId);
+          } catch (cancelErr) {
+              console.error('Failed to cancel abandoned order', cancelErr);
+          }
+          setPendingOrderId(null);
+      }
+
       Alert.alert('Payment Cancelled', 'Your eSewa payment was not completed.');
     }
   };

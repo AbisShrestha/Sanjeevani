@@ -20,4 +20,7 @@ router.get('/', verifyToken, authorizeRoles('admin'), orderController.getAllOrde
 // PUT: Admin - Update order status
 router.put('/:id/status', verifyToken, authorizeRoles('admin'), orderController.updateOrderStatus);
 
+// DELETE: User - Cancel pending order (restore stock if eSewa fails)
+router.delete('/:id/cancel', verifyToken, orderController.cancelOrder);
+
 module.exports = router;

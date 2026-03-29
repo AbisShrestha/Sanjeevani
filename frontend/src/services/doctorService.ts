@@ -22,6 +22,11 @@ export const getAllInsightsPublic = async () => {
 };
 
 // --- APPOINTMENTS ---
+export const checkAppointmentAvailability = async (doctorId: number, appointmentDate: string) => {
+    const res = await api.post('/doctor-features/appointments/check', { doctorId, appointmentDate });
+    return res.data;
+};
+
 export const bookAppointment = async (doctorId: number, appointmentDate: string, reason: string) => {
     const res = await api.post('/doctor-features/appointments', { doctorId, appointmentDate, reason });
     return res.data;

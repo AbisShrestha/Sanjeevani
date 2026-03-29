@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image, Platform, ScrollView, Modal } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import dayjs from 'dayjs';
-import { bookAppointment } from '../services/doctorService';
+import { bookAppointment, checkAppointmentAvailability } from '../services/doctorService';
 import { buildImageUri } from '../utils/image';
 import { initiateEsewaPayment, generateEsewaFormHTML, verifyEsewaPayment } from '../services/esewaService';
 import { WebView } from 'react-native-webview';
@@ -29,7 +29,31 @@ const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: 
         try {
             setIsSubmitting(true);
 
-            // 1. Initiate eSewa Payment
+            // 1. Double check availability before taking payment
+            const dateStr = selectedDate.format('YYYY-MM-DD');
+            const [timePart, modifier] = selectedTime.split(' ');
+            const [hoursStr, minutesStr] = timePart.split(':');
+            
+            let hours = parseInt(hoursStr, 10);
+            const minutes = parseInt(minutesStr, 10);
+            
+            if (modifier === 'PM' && hours !== 12) hours += 12;
+            if (modifier === 'AM' && hours === 12) hours = 0;
+            
+            const appointmentDateISO = dayjs(dateStr).hour(hours).minute(minutes).second(0).toISOString();
+
+            try {
+                await checkAppointmentAvailability(doctor.id, appointmentDateISO);
+            } catch (checkError: any) {
+                if (checkError.response?.status === 409) {
+                    Alert.alert('Slot Unavailable', 'This time slot was just booked by someone else. Please select another time.');
+                    setStep(1);
+                    return;
+                }
+                throw checkError; // if 500 or network error, let main catch block handle it
+            }
+
+            // 2. Initiate eSewa Payment
             const purchaseId = `APT-${doctor.id}-${Date.now()}`;
             const fee = doctor.fee ? Number(doctor.fee) : 500;
             
@@ -39,15 +63,15 @@ const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: 
                  `Consultation with Dr. ${doctor.name}`
             );
                  
-            // 2. Open eSewa Payment Gateway in WebView Modal
+            // 3. Open eSewa Payment Gateway in WebView Modal
             if (esewaResponse && esewaResponse.paymentUrl) {
                  const formHTML = generateEsewaFormHTML(esewaResponse.paymentUrl, esewaResponse.paymentData);
                  setEsewaHtmlConfig(formHTML);
             }
 
         } catch (error) {
-            console.error('eSewa Payment initiation failed:', error);
-            Alert.alert('Error', 'Failed to connect to eSewa. Please try again.');
+            console.error('eSewa Payment initiation failed or availability check failed:', error);
+            Alert.alert('Error', 'Failed to initialize booking. Please check your connection and try again.');
         } finally {
             setIsSubmitting(false);
         }
