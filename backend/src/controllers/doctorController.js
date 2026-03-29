@@ -86,7 +86,18 @@ const getAllDoctors = async (req, res) => {
             }));
 
         // 4. Merge
-        const allDoctors = [...doctors, ...formattedUserDoctors];
+        let allDoctors = [...doctors, ...formattedUserDoctors];
+
+        // 5. Filter by search query if provided
+        const { search } = req.query;
+        if (search) {
+            const queryRaw = search.toLowerCase().trim();
+            allDoctors = allDoctors.filter(doc => {
+                return (doc.name && doc.name.toLowerCase().includes(queryRaw)) || 
+                       (doc.specialty && doc.specialty.toLowerCase().includes(queryRaw)) ||
+                       (doc.hospital && doc.hospital.toLowerCase().includes(queryRaw));
+            });
+        }
 
         res.json(allDoctors);
     } catch (err) {
