@@ -1,7 +1,7 @@
 /**
  * Sanjeevani - Seed 6 Medicinal Insights (Community Articles)
- * Run: node scripts/seedInsights.js
- * On GCP: sudo docker compose exec backend node scripts/seedInsights.js
+ * Assigns each insight to a different doctor author
+ * Run on GCP: sudo docker compose exec backend node scripts/seedInsights.js
  */
 
 const pool = require('../src/config/db');
@@ -9,6 +9,7 @@ const pool = require('../src/config/db');
 const INSIGHTS = [
   {
     title: 'The Ancient Power of Ashwagandha: A Natural Stress Reliever',
+    authorEmail: 'aanchal@gmail.com',
     content: `Ashwagandha (Withania somnifera) is one of the most powerful adaptogenic herbs in Ayurvedic medicine. Often called "Indian Ginseng," this remarkable root has been used for over 3,000 years to help the body respond to stress, boost energy, and improve concentration.
 
 Modern scientific research has validated what Ayurvedic practitioners have known for millennia. Studies show that Ashwagandha can significantly reduce cortisol levels (the stress hormone) by up to 30%. It also supports healthy sleep patterns by calming the nervous system without causing drowsiness during the day.
@@ -19,6 +20,7 @@ Who should avoid it: Pregnant women, individuals with thyroid conditions (as it 
   },
   {
     title: 'Triphala: The Three-Fruit Formula for Complete Digestive Health',
+    authorEmail: 'rojina@gmail.com',
     content: `Triphala is perhaps the most well-known and widely used herbal formulation in all of Ayurvedic medicine. This powerful combination of three dried fruits - Amla (Emblica officinalis), Bibhitaki (Terminalia bellirica), and Haritaki (Terminalia chebula) - creates a balanced remedy that supports complete digestive wellness.
 
 Each fruit addresses a specific dosha: Amla balances Pitta, Bibhitaki balances Kapha, and Haritaki balances Vata. Together, they create a tridoshic formula suitable for almost everyone.
@@ -30,7 +32,8 @@ Recommended usage: Mix 1 teaspoon of Triphala powder in warm water and drink bef
 Pro tip: Triphala can also be used as an eye wash (strained and cooled decoction) to support healthy vision - a practice described in classical Ayurvedic texts.`,
   },
   {
-    title: 'Turmeric (Haridra) - Ayurveda\'s Golden Healer for Inflammation',
+    title: "Turmeric (Haridra) - Ayurveda's Golden Healer for Inflammation",
+    authorEmail: 'naina@gmail.com',
     content: `Turmeric, known as Haridra in Sanskrit, is undoubtedly the most scientifically studied herb in the Ayurvedic pharmacopoeia. Its active compound, curcumin, has been the subject of over 12,000 peer-reviewed studies confirming its anti-inflammatory, antioxidant, and healing properties.
 
 In Ayurveda, Haridra is classified as a "Krimighna" (anti-microbial) and "Kushthaghna" (beneficial for skin diseases). It is used both internally as a supplement and externally as a paste for wound healing.
@@ -42,7 +45,8 @@ Daily wellness routine: Take 1 Haridra capsule twice daily after meals, or add a
 Important note: While turmeric is extremely safe, high-dose supplements should be avoided by those on blood-thinning medications or with gallbladder issues.`,
   },
   {
-    title: 'Neem: Nature\'s Pharmacy for Skin and Blood Purification',
+    title: "Neem: Nature's Pharmacy for Skin and Blood Purification",
+    authorEmail: 'sumitra@gmail.com',
     content: `Neem (Azadirachta indica) is often called the "Village Pharmacy" in India because virtually every part of this remarkable tree - leaves, bark, seeds, flowers, and roots - has medicinal value. In Ayurveda, Neem is the go-to herb for blood purification and skin health.
 
 The bitter taste of Neem is therapeutically significant. According to Ayurvedic principles, the bitter taste (Tikta Rasa) naturally cleanses the blood, cools excess Pitta, and detoxifies the liver. This makes Neem capsules particularly effective for conditions like acne, eczema, and other skin inflammations that originate from internal toxin buildup.
@@ -55,6 +59,7 @@ Caution: Neem is a powerful herb and should be used in moderation. It is not rec
   },
   {
     title: 'Chyawanprash: The 3,000-Year-Old Immunity Superfood',
+    authorEmail: 'nipun@gmail.com',
     content: `Chyawanprash is not just an Ayurvedic supplement - it is a living piece of medical history. This dark, jam-like preparation was originally formulated by the sage twins Ashwini Kumaras to rejuvenate the elderly sage Chyawan, restoring his youth and vitality. The recipe, documented in the Charaka Samhita over 3,000 years ago, remains virtually unchanged today.
 
 The base of Chyawanprash is Amla (Indian Gooseberry), one of nature's richest sources of Vitamin C. But what makes this formulation truly special is the synergy of 40+ herbs, spices, and natural ingredients that work together to create a comprehensive immunity shield.
@@ -67,6 +72,7 @@ Modern lifestyle tip: Spread Chyawanprash on whole wheat toast as a healthy brea
   },
   {
     title: 'Brahmi: The Brain Herb for Memory, Focus and Mental Clarity',
+    authorEmail: 'samjhana@gmail.com',
     content: `Brahmi (Bacopa monnieri) holds a special place in Ayurvedic neuroscience. Named after Lord Brahma - the creator deity associated with knowledge and intellect - this small, creeping herb has been used for centuries to sharpen memory, improve concentration, and support overall cognitive function.
 
 Brahmi is classified as a "Medhya Rasayana" in Ayurveda, meaning it is a specific rejuvenator for the mind and intellect. Unlike modern stimulants that provide temporary alertness followed by a crash, Brahmi works gradually by nourishing the brain tissue and supporting the natural production of neurotransmitters.
@@ -83,29 +89,6 @@ const seedInsights = async () => {
   console.log('===========================================');
   console.log('  SANJEEVANI - Seeding 6 Medicinal Insights');
   console.log('===========================================\n');
-
-  // Find an admin user to be the author
-  const adminResult = await pool.query(
-    `SELECT userid FROM users WHERE role = 'admin' LIMIT 1`
-  );
-
-  let authorId;
-  if (adminResult.rows.length > 0) {
-    authorId = adminResult.rows[0].userid;
-    console.log(`  Using admin user ID: ${authorId} as insight author\n`);
-  } else {
-    // Fallback: find any doctor
-    const doctorResult = await pool.query(
-      `SELECT userid FROM users WHERE role = 'doctor' LIMIT 1`
-    );
-    if (doctorResult.rows.length > 0) {
-      authorId = doctorResult.rows[0].userid;
-      console.log(`  Using doctor user ID: ${authorId} as insight author\n`);
-    } else {
-      console.log('  ERROR: No admin or doctor user found. Please create one first.');
-      process.exit(1);
-    }
-  }
 
   // Ensure articles table exists
   await pool.query(`
@@ -136,11 +119,25 @@ const seedInsights = async () => {
         continue;
       }
 
+      // Find the doctor's user ID by email
+      const authorResult = await pool.query(
+        `SELECT userid FROM users WHERE LOWER(email) = LOWER($1)`,
+        [insight.authorEmail]
+      );
+
+      if (authorResult.rows.length === 0) {
+        console.log(`  SKIP  ${insight.title.substring(0, 50)}... (author ${insight.authorEmail} not found - run seedDoctorUsers.js first)`);
+        skipped++;
+        continue;
+      }
+
+      const authorId = authorResult.rows[0].userid;
+
       await pool.query(
         `INSERT INTO articles (title, content, imageurl, authorid) VALUES ($1, $2, $3, $4)`,
         [insight.title, insight.content, '', authorId]
       );
-      console.log(`  OK    ${insight.title.substring(0, 60)}...`);
+      console.log(`  OK    "${insight.title.substring(0, 50)}..." by ${insight.authorEmail}`);
       added++;
     } catch (err) {
       console.error(`  FAIL  ${insight.title.substring(0, 50)}: ${err.message}`);

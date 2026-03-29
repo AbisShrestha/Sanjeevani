@@ -59,44 +59,24 @@ const deleteDoctor = async (req, res) => {
 };
 
 // GET ALL DOCTORS (Public)
+// Only serves from the dedicated 'doctors' table where profiles are properly curated
 const getAllDoctors = async (req, res) => {
     try {
-        // 1. Fetch from explicit 'doctors' table
-        const doctorsResult = await pool.query('SELECT * FROM doctors ORDER BY id DESC');
-        const doctors = doctorsResult.rows;
-
-        // 2. Fetch from 'users' table where role is 'doctor'
-        const userDoctors = await userModel.getAllDoctors();
-
-        // 3. Convert User-Doctors to Doctor format, avoiding those already in the explicit 'doctors' table
-        const existingNames = new Set(doctors.map(d => d.name.toLowerCase()));
-        
-        const formattedUserDoctors = userDoctors
-            .filter(user => user.fullName && !existingNames.has(user.fullName.toLowerCase()))
-            .map(user => ({
-                id: `u-${user.userId || user.userid}`, 
-                name: user.fullName || user.fullname,
-                specialty: 'Ayurvedic Practitioner',
-                qualification: 'Verified User',
-                experience: 'Unknown',
-                image: user.profileimage || null,
-                rating: 5.0,
-                is_available: user.isactive,
-                source: 'user_db'
-            }));
-
-        // 4. Merge
-        let allDoctors = [...doctors, ...formattedUserDoctors];
-
-        // 5. Filter by search query if provided
+        let allDoctors;
         const { search } = req.query;
+
         if (search) {
-            const queryRaw = search.toLowerCase().trim();
-            allDoctors = allDoctors.filter(doc => {
-                return (doc.name && doc.name.toLowerCase().includes(queryRaw)) || 
-                       (doc.specialty && doc.specialty.toLowerCase().includes(queryRaw)) ||
-                       (doc.hospital && doc.hospital.toLowerCase().includes(queryRaw));
-            });
+            const queryRaw = `%${search.trim()}%`;
+            const result = await pool.query(
+                `SELECT * FROM doctors 
+                 WHERE name ILIKE $1 OR specialty ILIKE $1 OR hospital ILIKE $1
+                 ORDER BY id DESC`,
+                [queryRaw]
+            );
+            allDoctors = result.rows;
+        } else {
+            const result = await pool.query('SELECT * FROM doctors ORDER BY id DESC');
+            allDoctors = result.rows;
         }
 
         res.json(allDoctors);
