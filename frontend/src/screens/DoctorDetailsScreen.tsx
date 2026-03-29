@@ -99,7 +99,7 @@ const DoctorDetailsScreen = ({ navigation, route }: { navigation: any; route: an
                 <View className="bg-white p-5 mb-3 mx-4 rounded-xl shadow-sm border border-[#f0f0f0]">
                     <Text className="text-lg font-bold text-[#37474F] mb-2.5">About Doctor</Text>
                     <Text className="text-[14px] text-[#546E7A] leading-6">
-                        Dr. {doctor.name} is a distinguished Ayurvedic practitioner specializing in {doctor.specialty}.
+                        {doctor.name} is a distinguished Ayurvedic practitioner specializing in {doctor.specialty}.
                         With a deep rooted understanding of Doshas and natural remedies, {doctor.name.split(' ')[0]}
                         offers holistic treatments tailored to individual needs.
                     </Text>

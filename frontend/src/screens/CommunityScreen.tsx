@@ -42,7 +42,7 @@ const CommunityScreen = () => {
                 <Text className="text-[18px] font-bold text-[#333] mb-1">{item.title}</Text>
                 <View className="flex-row items-center mb-4">
                     <FontAwesome5 name="user-md" size={12} color="#00695C" />
-                    <Text className="text-[#00695C] font-semibold text-xs ml-2">Dr. {item.doctor_name}</Text>
+                    <Text className="text-[#00695C] font-semibold text-xs ml-2">{item.doctor_name}</Text>
                     <Text className="text-gray-400 text-xs ml-3">• {dayjs(item.created_at).format('MMM D, YYYY')}</Text>
                 </View>
                 <Text className="text-[#555] text-[15px] leading-6">{item.content}</Text>

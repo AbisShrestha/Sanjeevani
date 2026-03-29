@@ -253,7 +253,7 @@ const UserHomeScreen = ({ navigation }: { navigation: any }) => {
                     resizeMode="cover" 
                   />
                   <View className="p-3 items-center">
-                    <Text className="text-[13px] font-extrabold text-[#333] mb-0.5" numberOfLines={1}>Dr. {doc.name}</Text>
+                    <Text className="text-[13px] font-extrabold text-[#333] mb-0.5" numberOfLines={1}>{doc.name}</Text>
                     <Text className="text-[11px] text-[#666] mb-2">{doc.specialization}</Text>
                     <View className="bg-[#E0F2F1] px-3 py-1.5 rounded-full w-full items-center">
                        <Text className="text-[#00695C] text-[10px] font-bold">FEES: Rs. {doc.consultationfee}</Text>

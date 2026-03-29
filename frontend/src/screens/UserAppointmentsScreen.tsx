@@ -81,7 +81,7 @@ export default function UserAppointmentsScreen({ navigation }: { navigation: any
                         <FontAwesome5 name="user-md" size={20} color="#00695C" />
                     </View>
                     <View style={{ marginLeft: 15, flex: 1 }}>
-                        <Text style={styles.doctorName}>Dr. {item.doctor_name || 'Doctor'}</Text>
+                        <Text style={styles.doctorName}>{item.doctor_name || 'Doctor'}</Text>
                         <Text style={styles.reason}>Digital Consultation</Text>
                     </View>
                 </View>

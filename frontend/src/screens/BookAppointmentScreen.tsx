@@ -124,7 +124,7 @@ const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: 
                 <View style={styles.doctorCard}>
                     <Image source={{ uri: displayImage }} style={styles.doctorImg} />
                     <View style={styles.doctorInfo}>
-                        <Text style={styles.doctorName}>Dr. {doctor.name}</Text>
+                        <Text style={styles.doctorName}>{doctor.name}</Text>
                         <Text style={styles.doctorSpecialty}>{doctor.specialty}</Text>
                         <View style={styles.feeBadge}>
                             <Text style={styles.feeText}>Rs. {doctor.fee || '500'} / session</Text>
