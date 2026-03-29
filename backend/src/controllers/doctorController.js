@@ -45,6 +45,11 @@ const addDoctor = async (req, res) => {
 const deleteDoctor = async (req, res) => {
     try {
         const { id } = req.params;
+
+        if (typeof id === 'string' && id.startsWith('u-')) {
+            return res.status(400).json({ error: "Cannot delete registered users here. Go to Manage Users to delete this account." });
+        }
+
         await pool.query('DELETE FROM doctors WHERE id = $1', [id]);
         res.json({ message: "Doctor deleted successfully" });
     } catch (err) {
@@ -95,6 +100,20 @@ const updateDoctor = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, specialty, qualification, experience, hospital, phone, bio, image } = req.body;
+
+        if (typeof id === 'string' && id.startsWith('u-')) {
+            // "Promote" the User-Doctor into the official doctors table with rich data
+            const insertQuery = `
+                INSERT INTO doctors (name, specialty, qualification, experience, hospital, phone, bio, image)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                RETURNING *;
+            `;
+            const insertValues = [
+                name, specialty, qualification || 'MD (Ayurveda)', experience, hospital, phone, bio, image
+            ];
+            const insertResult = await pool.query(insertQuery, insertValues);
+            return res.status(201).json({ message: "User-Doctor promoted to official listing!", doctor: insertResult.rows[0] });
+        }
 
         const query = `
             UPDATE doctors
