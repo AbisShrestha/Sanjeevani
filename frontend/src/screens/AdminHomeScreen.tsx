@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   Platform,
+  Modal,
+  Pressable,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -51,8 +53,8 @@ interface AdminActionProps {
 const AdminDashboardScreen = ({ navigation }: { navigation: any }) => {
   // Using props instead of useNavigation hook
 
-  // Use 'Admin' as default name until we load the real one
   const [adminName, setAdminName] = useState<string>('Admin');
+  const [showMenu, setShowMenu] = useState(false);
 
   // States for loading screen and "pull-to-refresh" spinner
   const [loading, setLoading] = useState<boolean>(true);
@@ -162,9 +164,12 @@ const AdminDashboardScreen = ({ navigation }: { navigation: any }) => {
           <Text className="text-base text-[#78909C] font-medium">Welcome Back,</Text>
           <Text className="text-[26px] text-[#37474F] font-extrabold mt-1">{adminName}</Text>
         </View>
-        <View className="w-11 h-11 rounded-full bg-white justify-center items-center shadow-sm z-10">
+        <TouchableOpacity
+          onPress={() => setShowMenu(true)}
+          className="w-11 h-11 rounded-full bg-white justify-center items-center shadow-sm z-10"
+        >
           <FontAwesome5 name="user-shield" size={20} color="#2E7D32" />
-        </View>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -255,18 +260,47 @@ const AdminDashboardScreen = ({ navigation }: { navigation: any }) => {
             iconColor="#8E24AA"
             onPress={() => navigation.navigate('AdminUsers')}
           />
+          <AdminAction
+            title="Manage Insights"
+            subtitle="Edit & delete community articles"
+            icon="newspaper"
+            iconColor="#E65100"
+            onPress={() => navigation.navigate('AdminManageInsights')}
+          />
         </View>
-
-        {/* LOGOUT BUTTON (Bottom) */}
-        <TouchableOpacity
-          className="mt-5 bg-[#FFEBEE] py-4 rounded-2xl items-center border border-[#FFCDD2]"
-          onPress={handleLogout}
-        >
-          <Text className="text-[#D32F2F] text-base font-bold">Log Out</Text>
-        </TouchableOpacity>
 
         <View className="h-10" />
       </ScrollView>
+
+      {/* Admin Menu Overlay */}
+      <Modal
+        visible={showMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMenu(false)}
+      >
+        <Pressable
+          className="flex-1"
+          onPress={() => setShowMenu(false)}
+        >
+          <View className={`absolute right-6 bg-white rounded-2xl shadow-lg border border-[#eee] w-[200px] overflow-hidden ${Platform.OS === 'ios' ? 'top-[110px]' : 'top-[70px]'}`}>
+            <View className="px-4 py-3 border-b border-[#f0f0f0]">
+              <Text className="text-sm font-bold text-[#333]">{adminName}</Text>
+              <Text className="text-xs text-[#999] mt-0.5">Administrator</Text>
+            </View>
+            <TouchableOpacity
+              className="flex-row items-center px-4 py-3"
+              onPress={() => {
+                setShowMenu(false);
+                handleLogout();
+              }}
+            >
+              <FontAwesome5 name="sign-out-alt" size={16} color="#D32F2F" />
+              <Text className="ml-3 text-[#D32F2F] font-semibold text-[15px]">Log Out</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 };

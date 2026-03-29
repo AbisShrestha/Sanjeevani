@@ -14,6 +14,7 @@ import AdminAddDoctorScreen from '../screens/AdminAddDoctorScreen';
 import AdminEditDoctorScreen from '../screens/AdminEditDoctorScreen';
 import AdminUserListScreen from '../screens/AdminUserListScreen';
 import AdminManageOrdersScreen from '../screens/AdminManageOrdersScreen';
+import AdminManageInsightsScreen from '../screens/AdminManageInsightsScreen';
 import MedicineDetailsScreen from '../screens/MedicineDetailsScreen';
 import DoctorDetailsScreen from '../screens/DoctorDetailsScreen';
 import CartScreen from '../screens/CartScreen';
@@ -104,6 +105,11 @@ const AppNavigator = () => {
         name="AdminManageOrders"
         component={AdminManageOrdersScreen}
         options={{ title: 'Manage Orders' }}
+      />
+      <Stack.Screen
+        name="AdminManageInsights"
+        component={AdminManageInsightsScreen}
+        options={{ title: 'Manage Insights' }}
       />
 
       {/* User Features */}
