@@ -11,7 +11,10 @@ router.post('/', upload.single('file'), (req, res) => {
     // Return the URL to access the file
     // Assuming server runs on the same host/port, client can prepend base URL
     // We return the relative path
-    const fileUrl = `/uploads/${req.file.filename}`;
+    // Reconstruct the correct path (req.file.destination is e.g. "uploads/doctors/")
+    // We add a leading slash to make it /uploads/doctors/...
+    const dir = req.file.destination.replace(/\/$/, ""); // remove trailing slash if any
+    const fileUrl = `/${dir}/${req.file.filename}`;
 
     res.json({
         message: 'File uploaded successfully',

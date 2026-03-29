@@ -1,10 +1,25 @@
 const multer = require('multer');
 const path = require('path');
 
+const fs = require('fs');
+
 // Configure storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/'); // Save files to 'uploads' folder
+        // Default folder is 'uploads/'
+        let folderPath = 'uploads/';
+        
+        // If query specifies a folder (e.g. ?folder=doctors)
+        if (req.query.folder === 'doctors') {
+            folderPath = 'uploads/doctors/';
+        }
+
+        // Auto-create folder if missing
+        if (!fs.existsSync(folderPath)) {
+            fs.mkdirSync(folderPath, { recursive: true });
+        }
+
+        cb(null, folderPath);
     },
     filename: function (req, file, cb) {
         // Generate unique filename: fieldname-timestamp-random.ext

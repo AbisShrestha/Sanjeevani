@@ -7,7 +7,7 @@ import api, { SERVER_URL } from './api';
 */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const uploadImage = async (asset: ImagePicker.ImagePickerAsset) => {
+export const uploadImage = async (asset: ImagePicker.ImagePickerAsset, folder?: string) => {
   if (!asset || !asset.uri) {
     return null;
   }
@@ -25,7 +25,8 @@ export const uploadImage = async (asset: ImagePicker.ImagePickerAsset) => {
   const token = await AsyncStorage.getItem('token');
 
   try {
-    const response = await api.post('/upload', formData, {
+    const url = folder ? `/upload?folder=${encodeURIComponent(folder)}` : '/upload';
+    const response = await api.post(url, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})

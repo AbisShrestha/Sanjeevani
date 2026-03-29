@@ -15,6 +15,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import api from '../services/api';
 import { buildImageUri } from '../utils/image';
 import * as ImagePicker from 'expo-image-picker';
+import { uploadImage as uploadFile } from '../services/fileUploadService';
 
 const AdminEditDoctorScreen = ({ navigation, route }: { navigation: any; route: any }) => {
     // Using props instead of hooks
@@ -39,31 +40,21 @@ const AdminEditDoctorScreen = ({ navigation, route }: { navigation: any; route: 
         });
 
         if (!result.canceled) {
-            uploadImage(result.assets[0].uri);
+            handleImageUpload(result.assets[0]);
         }
     };
 
-    const uploadImage = async (uri: string) => {
+    const handleImageUpload = async (asset: ImagePicker.ImagePickerAsset) => {
         setUploading(true);
-        const formData = new FormData();
-        const filename = uri.split('/').pop() || 'upload.jpg';
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-        formData.append('image', {
-            uri,
-            name: filename,
-            type
-        } as any);
-
         try {
-            const res = await api.post('/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-                transformRequest: (data, headers) => formData,
-            });
-            setImage(res.data.imageUrl || res.data.fileUrl);
+            const uploadedUrl = await uploadFile(asset, 'doctors');
+            if (uploadedUrl) {
+                setImage(uploadedUrl);
+            } else {
+                Alert.alert("Upload Failed", "Could not upload image.");
+            }
         } catch (error: any) {
-            Alert.alert("Upload Failed", "Could not upload image.");
+            Alert.alert("Upload Failed", "Could not upload image. " + (error.response?.data?.message || error.message));
         } finally {
             setUploading(false);
         }
