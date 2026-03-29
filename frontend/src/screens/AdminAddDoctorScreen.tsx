@@ -8,7 +8,8 @@ import {
     ScrollView,
     Image,
     ActivityIndicator,
-    Platform
+    Platform,
+    KeyboardAvoidingView
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -88,80 +89,69 @@ const AdminAddDoctorScreen = ({ navigation }: { navigation: any }) => {
     const displayImage = buildImageUri(image);
 
     return (
-        <ScrollView className="flex-1 bg-[#F5F7FA]">
-            <View className="p-5 pb-20">
-                {/* Image Upload */}
-                <View className="items-center mb-6">
-                    <TouchableOpacity onPress={pickImage} className="relative">
-                        <Image
-                            source={{ uri: displayImage || 'https://via.placeholder.com/150' }}
-                            className="w-[120px] h-[120px] rounded-full bg-[#eee]"
-                        />
-                        <View className="absolute bottom-0 right-0 bg-[#2E7D32] p-2 rounded-full border-[3px] border-white">
-                            <FontAwesome5 name="camera" size={14} color="#fff" />
-                        </View>
-                    </TouchableOpacity>
-                    {uploading && <ActivityIndicator color="#2E7D32" className="mt-2" />}
-                </View>
-
-                {/* Form */}
-                <View className="bg-white p-5 rounded-2xl shadow-sm space-y-4">
-                    <View>
-                        <Text className="text-xs font-bold text-[#666] uppercase mb-1">Full Name</Text>
-                        <TextInput className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base" value={name} onChangeText={setName} placeholder="Dr. Name" />
-                    </View>
-
-                    <View>
-                        <Text className="text-xs font-bold text-[#666] uppercase mb-1">Specialty</Text>
-                        <TextInput className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base" value={specialty} onChangeText={setSpecialty} placeholder="e.g. General Physician, Skin Specialist" />
-                    </View>
-
-                    <View className="flex-row justify-between">
-                        <View className="w-[48%]">
-                            <Text className="text-xs font-bold text-[#666] uppercase mb-1">Experience</Text>
-                            <TextInput className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base" value={experience} onChangeText={setExperience} placeholder="e.g. 10 years" />
-                        </View>
-                        <View className="w-[48%]">
-                            <Text className="text-xs font-bold text-[#666] uppercase mb-1">Phone</Text>
-                            <TextInput className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-                        </View>
-                    </View>
-
-                    <View>
-                        <Text className="text-xs font-bold text-[#666] uppercase mb-1">Hospital / Clinic</Text>
-                        <TextInput className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base" value={hospital} onChangeText={setHospital} />
-                    </View>
-
-                    <View>
-                        <Text className="text-xs font-bold text-[#666] uppercase mb-1">Bio / Description</Text>
-                        <TextInput
-                            className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base h-[100px]"
-                            value={bio}
-                            onChangeText={setBio}
-                            multiline
-                            textAlignVertical="top"
-                            placeholder="About the doctor..."
-                        />
-                    </View>
-                </View>
-
-                {/* Save Button */}
-                <TouchableOpacity
-                    className="bg-[#2E7D32] py-4 rounded-xl mt-6 shadow-md shadow-[#2E7D32]/30 flex-row justify-center items-center"
-                    onPress={handleAdd}
-                    disabled={loading || uploading}
+        <View className="flex-1 bg-[#F5F7FA]">
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+            >
+                <ScrollView 
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
                 >
-                    {loading ? (
-                        <ActivityIndicator color="#fff" />
-                    ) : (
-                        <>
-                            <FontAwesome5 name="save" size={18} color="#fff" />
-                            <Text className="text-white font-bold text-lg ml-2">Add Doctor</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
+                    <View className="items-center mb-6">
+                        <TouchableOpacity onPress={pickImage} className="relative">
+                            <Image
+                                source={{ uri: displayImage || 'https://via.placeholder.com/150' }}
+                                className="w-[120px] h-[120px] rounded-full bg-[#eee]"
+                            />
+                            <View className="absolute bottom-0 right-0 bg-[#2E7D32] p-2 rounded-full border-[3px] border-white">
+                                <FontAwesome5 name="camera" size={14} color="#fff" />
+                            </View>
+                        </TouchableOpacity>
+                        {uploading && <ActivityIndicator color="#2E7D32" className="mt-2" />}
+                    </View>
+
+                    <View className="bg-white p-5 rounded-2xl shadow-sm space-y-4">
+                        <Text className="text-xs font-bold text-[#666] uppercase mb-1">Full Name</Text>
+                        <TextInput className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base mb-3" placeholder="Dr. John Doe" value={name} onChangeText={setName} />
+
+                        <Text className="text-xs font-bold text-[#666] uppercase mb-1">Specialty</Text>
+                        <TextInput className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base mb-3" placeholder="Ayurvedic Physician" value={specialty} onChangeText={setSpecialty} />
+
+                        <View className="flex-row justify-between mb-3">
+                            <View className="w-[48%]">
+                                <Text className="text-xs font-bold text-[#666] uppercase mb-1">Experience</Text>
+                                <TextInput className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base" placeholder="5 years" value={experience} onChangeText={setExperience} />
+                            </View>
+                            <View className="w-[48%]">
+                                <Text className="text-xs font-bold text-[#666] uppercase mb-1">Phone</Text>
+                                <TextInput className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base" placeholder="98XXXXXXXX" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+                            </View>
+                        </View>
+
+                        <Text className="text-xs font-bold text-[#666] uppercase mb-1">Hospital / Clinic</Text>
+                        <TextInput className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base mb-3" placeholder="Sanjeevani Clinic" value={hospital} onChangeText={setHospital} />
+
+                        <Text className="text-xs font-bold text-[#666] uppercase mb-1">Bio</Text>
+                        <TextInput className="bg-[#F5F7FA] p-3 rounded-xl text-[#333] text-base h-[100px]" placeholder="Brief bio about the doctor..." value={bio} onChangeText={setBio} multiline textAlignVertical="top" />
+                    </View>
+
+                    <TouchableOpacity
+                        className="bg-[#2E7D32] py-4 rounded-xl mt-6 shadow-md flex-row justify-center items-center"
+                        onPress={handleAdd}
+                        disabled={loading || uploading}
+                    >
+                        {loading ? <ActivityIndicator color="#fff" /> : (
+                            <>
+                                <FontAwesome5 name="plus" size={18} color="#fff" />
+                                <Text className="text-white font-bold text-lg ml-2">Add Doctor</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </View>
     );
 };
 
