@@ -140,18 +140,46 @@ const adminUpdateInsight = async (req, res) => {
   userid, doctorid, scheduledat, meetinglink, status
   ==================
 */
+
+const resolveDoctorUserId = async (doctorId) => {
+    if (typeof doctorId === 'string' && doctorId.startsWith('u-')) {
+        return parseInt(doctorId.replace('u-', ''), 10);
+    }
+    
+    const numericId = parseInt(doctorId, 10);
+    
+    // Attempt 1: Check if this numeric ID exists in doctors table, then map by name to users table
+    const doctorProfile = await pool.query('SELECT name FROM doctors WHERE id = $1', [numericId]);
+    
+    if (doctorProfile.rows.length > 0) {
+        // Try mapping by name
+        const doctorName = doctorProfile.rows[0].name;
+        const userMatch = await pool.query("SELECT userId FROM users WHERE fullName = $1 AND role = 'doctor'", [doctorName]);
+        if (userMatch.rows.length > 0) {
+            return userMatch.rows[0].userid;
+        }
+    }
+    
+    // Attempt 2: Maybe they passed the actual userId from the users table by mistake?
+    const userCheck = await pool.query("SELECT userId FROM users WHERE userId = $1 AND role = 'doctor'", [numericId]);
+    if (userCheck.rows.length > 0) {
+        return userCheck.rows[0].userid;
+    }
+    
+    return null;
+};
+
 const checkAppointmentAvailability = async (req, res) => {
     try {
-        let { doctorId, appointmentDate } = req.body;
+        const { doctorId, appointmentDate } = req.body;
+        
         if (!doctorId || !appointmentDate) {
-            return res.status(400).json({ message: 'Doctor and date are required' });
+            return res.status(400).json({ message: 'Doctor ID and Date are required' });
         }
 
-        let finalDoctorId = doctorId;
-        if (typeof doctorId === 'string' && doctorId.startsWith('u-')) {
-            finalDoctorId = parseInt(doctorId.replace('u-', ''), 10);
-        } else {
-            finalDoctorId = parseInt(doctorId, 10);
+        const finalDoctorId = await resolveDoctorUserId(doctorId);
+        if (!finalDoctorId) {
+            return res.status(404).json({ message: 'Doctor user account not found.' });
         }
 
         const checkQuery = `
@@ -183,12 +211,9 @@ const createAppointment = async (req, res) => {
 
         const timestamp = Date.now();
 
-        let finalDoctorId = doctorId;
-        if (typeof doctorId === 'string' && doctorId.startsWith('u-')) {
-            finalDoctorId = parseInt(doctorId.replace('u-', ''), 10);
-        } else {
-            // Must be a registered user to book a video consultation
-            finalDoctorId = parseInt(doctorId, 10);
+        const finalDoctorId = await resolveDoctorUserId(doctorId);
+        if (!finalDoctorId) {
+            return res.status(404).json({ message: 'Doctor user account not found.' });
         }
 
         // ==========================================
@@ -213,14 +238,12 @@ const createAppointment = async (req, res) => {
             VALUES ($1, $2, $3, $4)
             RETURNING consultationid as id, *, scheduledat as appointment_date, meetinglink as jitsi_link;
         `;
-        // 'reason' is not supported in the consultations table natively, but can be added to notes or dropped. 
-        // For zero-schema changes, we will simply drop 'reason' and rely on the date.
         const result = await pool.query(query, [patientId, finalDoctorId, appointmentDate, jitsiLink]);
 
         res.status(201).json({ message: 'Appointment booked successfully', appointment: result.rows[0] });
     } catch (error) {
         console.error('Create appointment error:', error);
-        res.status(500).json({ message: 'Failed to book appointment' });
+        res.status(500).json({ message: 'Failed to book appointment', error: error.message, stack: error.stack });
     }
 };
 
