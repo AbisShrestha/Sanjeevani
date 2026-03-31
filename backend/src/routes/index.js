@@ -35,11 +35,6 @@ router.use('/doctor-features', doctorFeaturesRoutes);
 router.use('/profile', profileRoutes);
 router.use('/reports', reportRoutes);
 
-// Debug: test profile route is mounted
-router.get('/profile-test', (req, res) => {
-  res.json({ message: 'Profile route mount point is reachable', hasProfileRoutes: !!profileRoutes });
-});
-
 /* 
    API HEALTH CHECK
 */

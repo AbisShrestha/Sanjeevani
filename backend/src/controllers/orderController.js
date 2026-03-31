@@ -86,6 +86,11 @@ const updateOrderStatus = async (req, res) => {
       return res.status(400).json({ error: 'Status is required' });
     }
 
+    const validStatuses = ['Processing', 'Approved', 'Shipped', 'Completed', 'Cancelled'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+    }
+
     const updatedOrder = await orderModel.updateOrderStatus(orderId, status);
     if (!updatedOrder) {
       return res.status(404).json({ error: 'Order not found' });
@@ -99,34 +104,43 @@ const updateOrderStatus = async (req, res) => {
 };
 
 const cancelOrder = async (req, res) => {
+  const pool = require('../config/db');
+  const client = await pool.connect();
   try {
     const orderId = req.params.id;
     const userId = req.user.userId;
-    const pool = require('../config/db');
+
+    await client.query('BEGIN');
 
     // Make sure the order belongs to the user and is 'Pending Payment'
-    const orderCheck = await pool.query("SELECT orderstatus FROM orders WHERE orderid = $1 AND userid = $2", [orderId, userId]);
+    const orderCheck = await client.query("SELECT orderstatus FROM orders WHERE orderid = $1 AND userid = $2 FOR UPDATE", [orderId, userId]);
     if (orderCheck.rows.length === 0) {
+        await client.query('ROLLBACK');
         return res.status(404).json({ error: 'Order not found' });
     }
 
     if (orderCheck.rows[0].orderstatus !== 'Pending Payment') {
+        await client.query('ROLLBACK');
         return res.status(400).json({ error: 'Only pending orders can be cancelled automatically' });
     }
 
     // 1. Mark as cancelled
-    await pool.query("UPDATE orders SET paymentstatus = 'Cancelled', orderstatus = 'Cancelled' WHERE orderid = $1", [orderId]);
+    await client.query("UPDATE orders SET paymentstatus = 'Cancelled', orderstatus = 'Cancelled' WHERE orderid = $1", [orderId]);
 
-    // 2. Restore stock
-    const items = await pool.query("SELECT medicineid, quantity FROM order_items WHERE orderid = $1", [orderId]);
+    // 2. Restore stock atomically
+    const items = await client.query("SELECT medicineid, quantity FROM order_items WHERE orderid = $1", [orderId]);
     for (const item of items.rows) {
-        await pool.query("UPDATE medicines SET stock = stock + $1 WHERE medicineid = $2", [item.quantity, item.medicineid]);
+        await client.query("UPDATE medicines SET stock = stock + $1 WHERE medicineid = $2", [item.quantity, item.medicineid]);
     }
 
+    await client.query('COMMIT');
     res.json({ message: 'Order cancelled and stock restored' });
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error cancelling order:', error);
     res.status(500).json({ error: 'Failed to cancel order' });
+  } finally {
+    client.release();
   }
 };
 

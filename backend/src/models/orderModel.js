@@ -106,8 +106,8 @@ const getUserOrders = async (userId) => {
         json_build_object(
           'orderitemid', oi.orderitemid,
           'medicineid', oi.medicineid,
-          'name', m.name,
-          'imageurl', m.imageurl,
+          'name', COALESCE(m.name, 'Deleted Product'),
+          'imageurl', COALESCE(m.imageurl, ''),
           'quantity', oi.quantity,
           'price', oi.price
         )
@@ -116,6 +116,7 @@ const getUserOrders = async (userId) => {
     LEFT JOIN order_items oi ON o.orderid = oi.orderid
     LEFT JOIN medicines m ON oi.medicineid = m.medicineid
     WHERE o.userid = $1
+    AND o.orderstatus NOT IN ('Pending Payment', 'Cancelled')
     GROUP BY o.orderid
     ORDER BY o.createdat DESC;
   `;
@@ -136,8 +137,8 @@ const getAllOrders = async (search = '') => {
         json_build_object(
           'orderitemid', oi.orderitemid,
           'medicineid', oi.medicineid,
-          'name', m.name,
-          'imageurl', m.imageurl,
+          'name', COALESCE(m.name, 'Deleted Product'),
+          'imageurl', COALESCE(m.imageurl, ''),
           'quantity', oi.quantity,
           'price', oi.price
         )

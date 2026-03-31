@@ -111,7 +111,7 @@ const CheckoutScreen = ({ navigation }: { navigation: any }) => {
       // 3. Initiate eSewa Payment
       const purchaseId = `ORD-${newOrder.order.orderid}-${Date.now()}`;
       const esewaResponse = await initiateEsewaPayment(
-        totalPrice,
+        Math.round(totalPrice * 100) / 100,
         purchaseId,
         `Sanjeevani Store Order (${cartItems.length} items)`
       );
@@ -182,7 +182,7 @@ const CheckoutScreen = ({ navigation }: { navigation: any }) => {
       } finally {
          setLoading(false);
       }
-    } else if (url.includes('sanjeevani-health.com/payment/failure') || url.includes('/cancel')) {
+    } else if (url.includes('sanjeevani-health.com/payment/failure')) {
       setEsewaHtmlConfig(null);
       
       // Cancel the pending order to restore the medicine stock!
