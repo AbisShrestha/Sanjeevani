@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, Linking } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, Linking, Modal, ScrollView } from 'react-native';
 import { getAppointmentsAsDoctor, updateAppointmentStatus } from '../../services/doctorService';
 import { FontAwesome5 } from '@expo/vector-icons';
 import dayjs from 'dayjs';
@@ -17,6 +17,16 @@ interface Appointment {
 const DoctorAppointmentsScreen = () => {
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
+    
+    // Reschedule States
+    const [rescheduleModalVisible, setRescheduleModalVisible] = useState(false);
+    const [selectedApptId, setSelectedApptId] = useState<number | null>(null);
+    const [selectedDate, setSelectedDate] = useState(dayjs());
+    const [selectedTime, setSelectedTime] = useState('10:00 AM');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const timeSlots = ['10:00 AM', '11:00 AM', '01:00 PM', '02:00 PM', '04:00 PM', '05:00 PM'];
+    const next7Days = Array.from({ length: 7 }).map((_, i) => dayjs().add(i, 'day'));
 
     const fetchAppointments = async () => {
         try {
@@ -42,6 +52,26 @@ const DoctorAppointmentsScreen = () => {
         } catch (error) {
             console.error(error);
             Alert.alert('Error', 'Failed to update status');
+        }
+    };
+
+    const handleReschedule = async () => {
+        if (!selectedApptId) return;
+        try {
+            setIsSubmitting(true);
+            const combinedDateTimeString = selectedDate.format('YYYY-MM-DD') + ' ' + selectedTime;
+            const finalISOString = dayjs(combinedDateTimeString, 'YYYY-MM-DD hh:mm A').toISOString();
+
+            await updateAppointmentStatus(selectedApptId, 'scheduled', finalISOString);
+            
+            Alert.alert('Success', 'Appointment formally rescheduled.');
+            setRescheduleModalVisible(false);
+            fetchAppointments();
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to reschedule appointment.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -103,10 +133,25 @@ const DoctorAppointmentsScreen = () => {
                         </TouchableOpacity>
                     )}
 
-                    {/* Show "Mark Completed" if it's past and still scheduled */}
-                    {isScheduled && isPast && (
+                    {/* Show "Mark Completed" strictly if it is Today or in the Past */}
+                    {isScheduled && (isToday || isPast) && (
                         <TouchableOpacity style={styles.completeBtn} onPress={() => handleUpdateStatus(item.id, 'completed')}>
                             <Text style={styles.actionBtnText}>Mark Completed</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    {/* Show "Reschedule" if scheduled */}
+                    {isScheduled && (
+                        <TouchableOpacity 
+                            style={[styles.cancelBtn, { backgroundColor: '#FFF3E0' }]} 
+                            onPress={() => {
+                                setSelectedApptId(item.id);
+                                setSelectedDate(dayjs(item.appointment_date));
+                                setSelectedTime(dayjs(item.appointment_date).format('hh:mm A'));
+                                setRescheduleModalVisible(true);
+                            }}
+                        >
+                            <Text style={[styles.actionBtnText, { color: '#E65100' }]}>Reschedule</Text>
                         </TouchableOpacity>
                     )}
 
@@ -144,6 +189,72 @@ const DoctorAppointmentsScreen = () => {
                     contentContainerStyle={{ padding: 16 }}
                 />
             )}
+
+            {/* RESCHEDULE MODAL */}
+            <Modal visible={rescheduleModalVisible} animationType="slide" transparent={true}>
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+                    <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40, maxHeight: '80%' }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#333' }}>Reschedule Appointment</Text>
+                            <TouchableOpacity onPress={() => setRescheduleModalVisible(false)} style={{ padding: 5 }}>
+                                <FontAwesome5 name="times" size={20} color="#999" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#555', marginBottom: 12 }}>Select New Date</Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 25 }}>
+                                {next7Days.map((d, index) => {
+                                    const isSelected = selectedDate.isSame(d, 'day');
+                                    return (
+                                        <TouchableOpacity
+                                            key={index}
+                                            style={{
+                                                width: 70, height: 80, borderRadius: 16, justifyContent: 'center', alignItems: 'center',
+                                                backgroundColor: isSelected ? '#00695C' : '#F5F7FA', marginRight: 12,
+                                                borderWidth: 1, borderColor: isSelected ? '#00695C' : '#E0E0E0'
+                                            }}
+                                            onPress={() => setSelectedDate(d)}
+                                        >
+                                            <Text style={{ fontSize: 14, color: isSelected ? '#fff' : '#666', marginBottom: 4 }}>{d.format('MMM')}</Text>
+                                            <Text style={{ fontSize: 20, fontWeight: 'bold', color: isSelected ? '#fff' : '#333' }}>{d.format('DD')}</Text>
+                                            <Text style={{ fontSize: 12, color: isSelected ? '#fff' : '#888', marginTop: 4 }}>{d.format('ddd')}</Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </ScrollView>
+
+                            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#555', marginBottom: 12 }}>Select New Time</Text>
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                                {timeSlots.map((time, index) => {
+                                    const isSelected = selectedTime === time;
+                                    return (
+                                        <TouchableOpacity
+                                            key={index}
+                                            style={{
+                                                paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12,
+                                                backgroundColor: isSelected ? '#00695C' : '#F5F7FA',
+                                                borderWidth: 1, borderColor: isSelected ? '#00695C' : '#E0E0E0'
+                                            }}
+                                            onPress={() => setSelectedTime(time)}
+                                        >
+                                            <Text style={{ fontWeight: 'bold', color: isSelected ? '#fff' : '#555' }}>{time}</Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        </ScrollView>
+
+                        <TouchableOpacity
+                            style={{ backgroundColor: '#00695C', padding: 16, borderRadius: 16, alignItems: 'center', marginTop: 24 }}
+                            onPress={handleReschedule}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Confirm Reschedule</Text>}
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };

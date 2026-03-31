@@ -32,6 +32,7 @@ export const generateEsewaFormHTML = (paymentUrl: string, paymentData: any): str
     <!DOCTYPE html>
     <html>
     <head>
+      <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
         body {
@@ -64,12 +65,14 @@ export const generateEsewaFormHTML = (paymentUrl: string, paymentData: any): str
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
+        .error { color: red; font-size: 14px; margin-top: 10px; word-break: break-all; padding: 0 20px; }
       </style>
     </head>
     <body>
-      <div class="loading">
+      <div class="loading" id="loadingDiv">
         <div class="spinner"></div>
         <p>Redirecting to eSewa...</p>
+        <p class="error" id="errorMsg" style="display:none;"></p>
       </div>
       <form id="esewaForm" action="${paymentUrl}" method="POST">
         ${Object.entries(paymentData)
@@ -77,7 +80,22 @@ export const generateEsewaFormHTML = (paymentUrl: string, paymentData: any): str
           .join('\n        ')}
       </form>
       <script>
-        document.getElementById('esewaForm').submit();
+        window.onload = function() {
+          try {
+            document.getElementById('esewaForm').submit();
+          } catch(e) {
+            document.getElementById('errorMsg').style.display = 'block';
+            document.getElementById('errorMsg').textContent = 'Form submit error: ' + e.message;
+          }
+        };
+        // Fallback: if form hasn't navigated after 5s, show debug info
+        setTimeout(function() {
+          if (document.getElementById('loadingDiv')) {
+            var el = document.getElementById('errorMsg');
+            el.style.display = 'block';
+            el.textContent = 'Still loading... Form action: ${paymentUrl}';
+          }
+        }, 5000);
       </script>
     </body>
     </html>

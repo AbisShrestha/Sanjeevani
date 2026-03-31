@@ -36,9 +36,9 @@ const UserHomeScreen = ({ navigation }: { navigation: any }) => {
     fetchHomeData();
   }, []);
 
-  // Refresh data when navigating back to home
   useFocusEffect(
     useCallback(() => {
+      loadUser();
       fetchHomeData();
     }, [])
   );
@@ -50,10 +50,10 @@ const UserHomeScreen = ({ navigation }: { navigation: any }) => {
         const u = JSON.parse(data);
         setUserName(u.fullName ? u.fullName.split(' ')[0] : 'User');
       } else {
-        setUserName('Guest');
+        setUserName('User');
       }
     } catch {
-      setUserName('Guest');
+      setUserName('User');
     }
   };
 
@@ -75,7 +75,7 @@ const UserHomeScreen = ({ navigation }: { navigation: any }) => {
   };
 
   const handleAuthAction = async () => {
-    if (userName === 'Guest') {
+    if (userName === 'User') {
       navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     } else {
       navigation.navigate('UserProfile');
@@ -83,7 +83,7 @@ const UserHomeScreen = ({ navigation }: { navigation: any }) => {
   };
 
   const handleNavigation = (route: string) => {
-    if (userName === 'Guest') {
+    if (userName === 'User') {
       const allowed = ['Store']; // Guests mostly see Store
       if (!allowed.includes(route)) {
         Alert.alert(
@@ -144,7 +144,7 @@ const UserHomeScreen = ({ navigation }: { navigation: any }) => {
             activeOpacity={0.8}
           >
             <FontAwesome5
-              name={userName === 'Guest' ? "sign-in-alt" : "user-alt"}
+              name={userName === 'User' ? "sign-in-alt" : "user-alt"}
               size={18}
               color="#fff"
             />

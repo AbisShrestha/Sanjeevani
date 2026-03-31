@@ -114,16 +114,19 @@ const ChatBotScreen = ({ navigation }: { navigation: any }) => {
         });
 
         let seenBytes = 0;
+        let buffer = ''; 
 
         xhr.onreadystatechange = () => {
              if (xhr.readyState === 3 || xhr.readyState === 4) {
-                 const newResponse = xhr.responseText.substring(seenBytes);
+                 const newText = xhr.responseText.substring(seenBytes);
                  seenBytes = xhr.responseText.length;
+                 buffer += newText;
                  
-                 // Process the SSE chunks
-                 const chunks = newResponse.split('\n\n');
+                 let parts = buffer.split('\n\n');
+                 // The last segment might be an incomplete chunk, so keep it in the buffer until the next network packet arrives
+                 buffer = parts.pop() || '';
                  
-                 for (const chunk of chunks) {
+                 for (const chunk of parts) {
                      if (chunk.startsWith('data: ')) {
                          try {
                              const dataObj = JSON.parse(chunk.replace('data: ', ''));
@@ -137,7 +140,8 @@ const ChatBotScreen = ({ navigation }: { navigation: any }) => {
                                  ));
                              }
                          } catch (e) {
-                             // Ignore partial JSON blocks that haven't fully streamed in yet
+                             // This won't happen often now because we wait for the double newline boundary
+                             console.error("SSE JSON Parse Error", e);
                          }
                      }
                  }

@@ -263,7 +263,7 @@ const getMyAppointmentsAsPatient = async (req, res) => {
 const updateAppointmentStatus = async (req, res) => {
     try {
         const appointmentId = req.params.id;
-        const { status } = req.body;
+        const { status, appointmentDate } = req.body;
         const doctorId = req.user.userId;
 
         if (!['scheduled', 'completed', 'cancelled', 'pending', 'confirmed'].includes(status)) {
@@ -275,13 +275,26 @@ const updateAppointmentStatus = async (req, res) => {
         if (status === 'confirmed') safeStatus = 'scheduled';
         if (status === 'pending') safeStatus = 'scheduled'; // Since it drops in as scheduled natively
 
-        const query = `
+        let query = `
             UPDATE consultations
             SET status = $1
             WHERE consultationid = $2 AND doctorid = $3
             RETURNING consultationid as id, status;
         `;
-        const result = await pool.query(query, [safeStatus, appointmentId, doctorId]);
+        let params = [safeStatus, appointmentId, doctorId];
+
+        // If a new date is provided, update that too (for rescheduling)
+        if (appointmentDate) {
+            query = `
+                UPDATE consultations
+                SET status = $1, scheduledat = $4
+                WHERE consultationid = $2 AND doctorid = $3
+                RETURNING consultationid as id, status, scheduledat as appointment_date;
+            `;
+            params = [safeStatus, appointmentId, doctorId, appointmentDate];
+        }
+
+        const result = await pool.query(query, params);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Appointment not found or unauthorized' });

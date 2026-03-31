@@ -25,7 +25,10 @@ const AddMedicineTrackerScreen = ({ navigation, route }: { navigation: any; rout
   const [totalQty, setTotalQty] = useState(prefill?.stock?.toString() || '');
   const [dosagePerDay, setDosagePerDay] = useState('');
   const [reminderDays, setReminderDays] = useState('3');
+  const [unit, setUnit] = useState('Pills');
   const [loading, setLoading] = useState(false);
+  
+  const UNITS = ['Pills', 'ml', 'Drops', 'Grams'];
 
   const handleSave = async () => {
     // Validation
@@ -56,6 +59,7 @@ const AddMedicineTrackerScreen = ({ navigation, route }: { navigation: any; rout
         dosagePerDay: dosage,
         startDate: new Date().toISOString(),
         reminderDaysBefore: remind,
+        unit: unit,
       });
 
       Alert.alert(
@@ -110,9 +114,27 @@ const AddMedicineTrackerScreen = ({ navigation, route }: { navigation: any; rout
 
           {/* Form */}
           <View className="bg-white rounded-[16px] p-5 mb-5 shadow-sm">
-            <Text className="text-lg font-bold text-[#37474F] mb-5 border-b border-[#ECEFF1] pb-2.5">
+            <Text className="text-lg font-bold text-[#37474F] mb-4 border-b border-[#ECEFF1] pb-2.5">
               Medicine Details
             </Text>
+
+            {/* Unit Selector */}
+            <View className="mb-5">
+              <Text className="text-[13px] font-bold text-[#546E7A] uppercase tracking-wider mb-2 ml-1">
+                Medicine Type (Unit)
+              </Text>
+              <View className="flex-row">
+                {UNITS.map(u => (
+                  <TouchableOpacity
+                    key={u}
+                    onPress={() => setUnit(u)}
+                    className={`px-4 py-2 rounded-full mr-2 border ${unit === u ? 'bg-[#00695C] border-[#00695C]' : 'bg-[#F5F7FA] border-[#CFD8DC]'}`}
+                  >
+                    <Text className={`font-bold text-[13px] ${unit === u ? 'text-white' : 'text-[#546E7A]'}`}>{u}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
 
             <PremiumInput
               label="Medicine Name *"
@@ -124,20 +146,20 @@ const AddMedicineTrackerScreen = ({ navigation, route }: { navigation: any; rout
             <View className="flex-row justify-between">
               <View className="w-[48%]">
                 <PremiumInput
-                  label="Total Quantity *"
+                  label={`Total Quantity (${unit}) *`}
                   value={totalQty}
                   onChangeText={setTotalQty}
                   keyboardType="numeric"
-                  placeholder="e.g. 30"
+                  placeholder={unit === 'ml' ? 'e.g. 100' : 'e.g. 30'}
                 />
               </View>
               <View className="w-[48%]">
                 <PremiumInput
-                  label="Dosage Per Day *"
+                  label={`Daily Dose (${unit}) *`}
                   value={dosagePerDay}
                   onChangeText={setDosagePerDay}
                   keyboardType="numeric"
-                  placeholder="e.g. 2"
+                  placeholder={unit === 'ml' ? 'e.g. 5' : 'e.g. 2'}
                 />
               </View>
             </View>

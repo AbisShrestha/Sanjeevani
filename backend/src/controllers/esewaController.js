@@ -38,6 +38,8 @@ const initiatePayment = async (req, res) => {
     }
 
     const totalAmount = Number(amount);
+    // eSewa strictly expects numbers without excessively long decimal places.
+    // However, the signature relies on exactly how the string looks, so we just use the number as passed.
     const taxAmount = 0;
     const productServiceCharge = 0;
     const productDeliveryCharge = 0;
@@ -115,15 +117,18 @@ const verifyPayment = async (req, res) => {
     if (verifyResponse.data.status === 'COMPLETE') {
       const txn = decodedData.transaction_uuid;
       
-      if (txn.startsWith('ORDER-')) {
-        const orderId = txn.replace('ORDER-', '');
-        try {
-          await pool.query(
-            "UPDATE orders SET paymentstatus = 'Completed', orderstatus = 'Processing' WHERE orderid = $1", 
-            [orderId]
-          );
-        } catch (dbErr) {
-          console.error("Critical: Failed to update order status post-payment", dbErr);
+      if (txn.startsWith('ORDER-') || txn.startsWith('ORD-')) {
+        const parts = txn.split('-');
+        if (parts.length >= 2) {
+          const orderId = parts[1]; // Parts[1] is the pure Postgres orderid whether it is ORD-15-TIMESTAMP or ORDER-15
+          try {
+            await pool.query(
+              "UPDATE orders SET paymentstatus = 'Completed', orderstatus = 'Processing' WHERE orderid = $1", 
+              [orderId]
+            );
+          } catch (dbErr) {
+            console.error("Critical: Failed to update order status post-payment", dbErr);
+          }
         }
       } 
       else if (txn.startsWith('APT-')) {

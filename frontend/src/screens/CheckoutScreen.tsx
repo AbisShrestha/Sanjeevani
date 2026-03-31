@@ -52,6 +52,20 @@ const CheckoutScreen = ({ navigation }: { navigation: any }) => {
     loadUserData();
   }, []);
 
+  // Cancel any pending order and close the payment modal
+  const handleClosePaymentModal = async () => {
+    setEsewaHtmlConfig(null);
+    if (pendingOrderId) {
+      try {
+        await cancelOrder(pendingOrderId);
+      } catch (cancelErr) {
+        console.error('Failed to cancel abandoned order', cancelErr);
+      }
+      setPendingOrderId(null);
+    }
+    Alert.alert('Payment Cancelled', 'Your payment was not completed. No charges were made.');
+  };
+
   const handlePlaceOrder = async () => {
     // 1. Validate Form
     if (!fullName.trim() || !email.trim() || !phone.trim() || !address.trim()) {
@@ -61,6 +75,11 @@ const CheckoutScreen = ({ navigation }: { navigation: any }) => {
 
     if (cartItems.length === 0) {
       Alert.alert('Empty Cart', 'Your cart is empty.');
+      return;
+    }
+
+    // Prevent duplicate orders if user spams button
+    if (loading || pendingOrderId) {
       return;
     }
 
@@ -90,21 +109,30 @@ const CheckoutScreen = ({ navigation }: { navigation: any }) => {
       }
 
       // 3. Initiate eSewa Payment
-      // Pass the actual Postgres order ID as the transaction UUID so the backend verifier knows which order to update!
-      const purchaseId = `ORDER-${newOrder.order.orderid}`;
+      const purchaseId = `ORD-${newOrder.order.orderid}-${Date.now()}`;
       const esewaResponse = await initiateEsewaPayment(
         totalPrice,
         purchaseId,
         `Sanjeevani Store Order (${cartItems.length} items)`
       );
-      
+
       if (esewaResponse && esewaResponse.paymentUrl) {
         const formHTML = generateEsewaFormHTML(esewaResponse.paymentUrl, esewaResponse.paymentData);
-        setEsewaHtmlConfig(formHTML); // Opens the WebView Modal
+        setEsewaHtmlConfig(formHTML);
+      } else {
+        // eSewa initiation failed — cancel the pending order immediately
+        try { await cancelOrder(newOrder.order.orderid); } catch(e) {}
+        setPendingOrderId(null);
+        Alert.alert('eSewa Error', 'Failed to connect to eSewa payment gateway.');
       }
 
-    } catch (error) {
-      Alert.alert('Payment Initiation Failed', 'Could not connect to eSewa. Please try again.');
+    } catch (error: any) {
+      // If we already created an order but eSewa failed, cancel it
+      if (pendingOrderId) {
+        try { await cancelOrder(pendingOrderId); } catch(e) {}
+        setPendingOrderId(null);
+      }
+      Alert.alert('Payment Initiation Failed', error?.message || 'Could not connect to eSewa. Please try again.');
       console.error('Checkout error:', error);
     } finally {
       setLoading(false);
@@ -314,20 +342,39 @@ const CheckoutScreen = ({ navigation }: { navigation: any }) => {
       </View>
 
       {/* Embedded eSewa WebView Modal */}
-      <Modal visible={!!esewaHtmlConfig} animationType="slide" onRequestClose={() => setEsewaHtmlConfig(null)}>
+      <Modal visible={!!esewaHtmlConfig} animationType="slide" onRequestClose={handleClosePaymentModal}>
         <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? 40 : 0 }}>
           <View className="flex-row items-center p-4 border-b border-[#ECEFF1] bg-white">
-             <TouchableOpacity onPress={() => setEsewaHtmlConfig(null)} className="p-2">
+             <TouchableOpacity onPress={handleClosePaymentModal} className="p-2">
                <FontAwesome5 name="times" size={20} color="#333" />
              </TouchableOpacity>
              <Text className="text-lg font-bold ml-4">Secure eSewa Payment</Text>
           </View>
           {esewaHtmlConfig && (
             <WebView
+              key={Date.now().toString()}
               source={{ html: esewaHtmlConfig }}
               onNavigationStateChange={handleNavigationStateChange}
               style={{ flex: 1 }}
               startInLoadingState={true}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              mixedContentMode="always"
+              thirdPartyCookiesEnabled={true}
+              sharedCookiesEnabled={true}
+              originWhitelist={['*']}
+              onShouldStartLoadWithRequest={() => true}
+              cacheEnabled={false}
+              incognito={true}
+              onError={(syntheticEvent) => {
+                const { nativeEvent } = syntheticEvent;
+                console.error('[WebView Error]', nativeEvent);
+                Alert.alert('WebView Error', nativeEvent.description || 'Unknown error loading eSewa page');
+              }}
+              onHttpError={(syntheticEvent) => {
+                const { nativeEvent } = syntheticEvent;
+                console.error('[WebView HTTP Error]', nativeEvent.statusCode, nativeEvent.url);
+              }}
               renderLoading={() => (
                 <View className="absolute top-0 bottom-0 left-0 right-0 justify-center items-center bg-white z-10">
                   <ActivityIndicator size="large" color="#60BB46" />

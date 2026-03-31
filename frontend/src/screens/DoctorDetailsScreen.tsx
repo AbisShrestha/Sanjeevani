@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -7,7 +7,9 @@ import {
     TouchableOpacity,
     StatusBar,
     Alert,
-    Platform
+    Platform,
+    Modal,
+    TouchableWithoutFeedback
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -18,6 +20,8 @@ const DoctorDetailsScreen = ({ navigation, route }: { navigation: any; route: an
     // Using props instead of hooks
     const { doctor } = route.params;
     const displayImage = buildImageUri(doctor?.image, 'https://via.placeholder.com/150');
+    
+    const [isImageModalVisible, setImageModalVisible] = useState(false);
 
     const handleBook = async () => {
         const token = await AsyncStorage.getItem('token');
@@ -51,10 +55,12 @@ const DoctorDetailsScreen = ({ navigation, route }: { navigation: any; route: an
             <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
                 {/* DOCTOR HEADER CARD */}
                 <View className="bg-white items-center p-6 mb-3 shadow-sm rounded-b-[24px]">
-                    <Image
-                        source={{ uri: displayImage || 'https://via.placeholder.com/150' }}
-                        className="w-[110px] h-[110px] rounded-full mb-4 border-4 border-[#E0F2F1]"
-                    />
+                    <TouchableOpacity activeOpacity={0.8} onPress={() => setImageModalVisible(true)}>
+                        <Image
+                            source={{ uri: displayImage || 'https://via.placeholder.com/150' }}
+                            className="w-[110px] h-[110px] rounded-full mb-4 border-4 border-[#E0F2F1]"
+                        />
+                    </TouchableOpacity>
                     <Text className="text-[22px] font-bold text-[#333] mb-1">{doctor.name}</Text>
                     <Text className="text-base text-[#00695C] font-semibold mb-3 tracking-wide">{doctor.specialty}</Text>
 
@@ -136,6 +142,24 @@ const DoctorDetailsScreen = ({ navigation, route }: { navigation: any; route: an
                     <Text className="text-white font-bold text-base">Book Appointment</Text>
                 </TouchableOpacity>
             </View>
+            {/* FULL SCREEN IMAGE MODAL */}
+            <Modal visible={isImageModalVisible} transparent={true} animationType="fade">
+                <View className="flex-1 bg-black/95 justify-center items-center relative">
+                    <TouchableOpacity 
+                        className="absolute top-12 right-6 z-50 p-2 bg-white/20 rounded-full"
+                        onPress={() => setImageModalVisible(false)}
+                    >
+                        <FontAwesome5 name="times" size={24} color="#fff" />
+                    </TouchableOpacity>
+                    <TouchableWithoutFeedback onPress={() => setImageModalVisible(false)}>
+                        <Image
+                            source={{ uri: displayImage || 'https://via.placeholder.com/800x800' }}
+                            className="w-full h-[70%]"
+                            resizeMode="contain"
+                        />
+                    </TouchableWithoutFeedback>
+                </View>
+            </Modal>
         </View>
     );
 };

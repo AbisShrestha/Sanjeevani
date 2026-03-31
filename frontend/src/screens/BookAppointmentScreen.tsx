@@ -223,14 +223,6 @@ const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: 
                             <Text style={styles.paymentMethodText}>Pay via eSewa</Text>
                             <FontAwesome5 name="check-circle" size={20} color="#00695C" style={{ marginLeft: 'auto' }} />
                         </View>
-                        <View style={styles.paymentMethod}>
-                            <FontAwesome5 name="credit-card" size={24} color="#999" />
-                            <Text style={[styles.paymentMethodText, { color: '#999' }]}>Credit / Debit Card</Text>
-                        </View>
-                        <View style={styles.paymentMethod}>
-                            <FontAwesome5 name="university" size={24} color="#999" />
-                            <Text style={[styles.paymentMethodText, { color: '#999' }]}>UPI / Bank Transfer</Text>
-                        </View>
                     </View>
                 )}
             </ScrollView>
@@ -267,6 +259,9 @@ const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: 
                             onNavigationStateChange={handleNavigationStateChange}
                             style={{ flex: 1 }}
                             startInLoadingState={true}
+                            javaScriptEnabled={true}
+                            domStorageEnabled={true}
+                            originWhitelist={['*']}
                             renderLoading={() => (
                                 <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', zIndex: 10 }}>
                                     <ActivityIndicator size="large" color="#60BB46" />

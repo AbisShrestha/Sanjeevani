@@ -68,8 +68,12 @@ const getChatResponse = async (req, res) => {
         for await (const chunk of result.stream) {
             const chunkText = chunk.text();
             if (chunkText) {
-                // Formatting payload as SSE event
-                res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+                // Split the AI chunk into words/characters to force a beautiful "typewriter" effect on the app!
+                const chars = chunkText.split(/(?<=\s|-|,|\.)|(?=\n)|(?<=\n)/);
+                for (const char of chars) {
+                    res.write(`data: ${JSON.stringify({ text: char })}\n\n`);
+                    await new Promise(r => setTimeout(r, 20)); // Delay slightly to make it look like human typing!
+                }
             }
         }
         

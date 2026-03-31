@@ -42,8 +42,10 @@ export const getAppointmentsAsPatient = async () => {
     return res.data;
 };
 
-export const updateAppointmentStatus = async (appointmentId: number | string, status: string) => {
-    const res = await api.put(`/doctor-features/appointments/${appointmentId}/status`, { status });
+export const updateAppointmentStatus = async (appointmentId: number | string, status: string, appointmentDate?: string) => {
+    const payload: any = { status };
+    if (appointmentDate) payload.appointmentDate = appointmentDate;
+    const res = await api.put(`/doctor-features/appointments/${appointmentId}/status`, payload);
     return res.data;
 };
 

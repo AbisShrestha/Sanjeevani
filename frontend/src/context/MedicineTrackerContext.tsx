@@ -23,6 +23,7 @@ export interface TrackedMedicine {
   dosagePerDay: number;
   startDate: string; // ISO string
   reminderDaysBefore: number; // notify X days before running out
+  unit?: string; // e.g., 'pills', 'ml', 'drops', 'mg'
   notificationId?: string; // expo notification identifier
 }
 

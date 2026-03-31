@@ -67,7 +67,7 @@ const MyMedicinesScreen = ({ navigation }: { navigation: any }) => {
             </View>
             <View className="flex-1">
               <Text className="text-[17px] font-bold text-[#263238]" numberOfLines={1}>{item.name}</Text>
-              <Text className="text-[13px] text-[#78909C] mt-0.5">{item.dosagePerDay} per day • {item.totalQty} total</Text>
+              <Text className="text-[13px] text-[#78909C] mt-0.5">{item.dosagePerDay} {item.unit || 'Pills'} per day • {item.totalQty} {item.unit || 'Pills'} total</Text>
             </View>
           </View>
           <View className="px-2.5 py-1 rounded-lg" style={{ backgroundColor: status.bg }}>
@@ -78,7 +78,7 @@ const MyMedicinesScreen = ({ navigation }: { navigation: any }) => {
         {/* Progress Bar */}
         <View className="mb-3">
           <View className="flex-row justify-between mb-1.5">
-            <Text className="text-[12px] text-[#90A4AE] font-medium">{qtyLeft} left of {item.totalQty}</Text>
+            <Text className="text-[12px] text-[#90A4AE] font-medium">{qtyLeft} {item.unit || 'Pills'} left</Text>
             <Text className="text-[12px] font-bold" style={{ color: progressColor }}>{daysLeft} days left</Text>
           </View>
           <View className="h-[8px] bg-[#ECEFF1] rounded-full overflow-hidden">

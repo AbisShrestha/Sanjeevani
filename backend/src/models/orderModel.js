@@ -149,14 +149,16 @@ const getAllOrders = async (search = '') => {
   `;
 
   const values = [];
+  query += ` WHERE o.orderstatus IN ('Processing', 'Approved', 'Shipped', 'Completed')`;
+
   if (search) {
     // If search is a number, try matching orderid
     const isNum = !isNaN(search);
     if (isNum) {
-      query += ` WHERE o.orderid = $1 OR u.fullname ILIKE $2 OR u.email ILIKE $2`;
+      query += ` AND (o.orderid = $1 OR u.fullname ILIKE $2 OR u.email ILIKE $2)`;
       values.push(parseInt(search), `%${search}%`);
     } else {
-      query += ` WHERE u.fullname ILIKE $1 OR u.email ILIKE $1`;
+      query += ` AND (u.fullname ILIKE $1 OR u.email ILIKE $1)`;
       values.push(`%${search}%`);
     }
   }
