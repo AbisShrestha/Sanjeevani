@@ -68,8 +68,19 @@ const register = async (req, res) => {
       role: 'user',
     });
 
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET not configured');
+    }
+
+    const token = jwt.sign(
+      { userId: newUser.userid, role: newUser.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
     res.status(201).json({
       message: 'User registered successfully',
+      token,
       user: {
         userId: newUser.userid,
         fullName: newUser.fullname,

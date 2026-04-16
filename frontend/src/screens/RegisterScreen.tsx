@@ -12,7 +12,11 @@ import {
   StatusBar
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { registerUser } from '../services/authService';
+import { setAuthToken } from '../services/api';
+import { useCart } from '../context/CartContext';
 
 const RegisterScreen = ({ navigation }: any) => {
   const [fullName, setFullName] = useState('');
@@ -21,6 +25,7 @@ const RegisterScreen = ({ navigation }: any) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { refreshCartAuth } = useCart();
 
   const handleRegister = async () => {
     if (!fullName || !email || !phone || !password) {
@@ -31,15 +36,31 @@ const RegisterScreen = ({ navigation }: any) => {
     try {
       setLoading(true);
 
-      await registerUser({
+      const response = await registerUser({
         fullName,
         email,
         phone,
         password,
       });
 
-      Alert.alert('Success', 'Account created successfully');
-      navigation.navigate('Login');
+      // Auto-login logic
+      if (response && response.token) {
+        await AsyncStorage.setItem('token', response.token);
+        await AsyncStorage.setItem('user', JSON.stringify(response.user));
+        
+        setAuthToken(response.token);
+        await refreshCartAuth();
+        
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'User' }],
+        });
+      } else {
+        // Fallback if backend hasn't updated yet
+        Alert.alert('Success', 'Account created successfully');
+        navigation.navigate('Login');
+      }
+
     } catch (error: any) {
       console.error(error);
       let errorMessage = 'Something went wrong. Please try again.';
