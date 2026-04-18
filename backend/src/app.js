@@ -40,7 +40,7 @@ app.use('/api', routes);
    HEALTH CHECK / TEST
  */
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'UP', message: 'Sanjeevani Backend is healthy!' });
+  res.status(200).json({ status: 'UP', message: 'Sanjeevani Backend: LATEST_VERSION_LIVE!' });
 });
 /* 
    404 FALLBACK (Route Not Found)
