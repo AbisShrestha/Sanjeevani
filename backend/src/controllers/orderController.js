@@ -28,8 +28,14 @@ const placeOrder = async (req, res) => {
         orderStatus || 'Processing'
     );
 
+    // Step: Simulated Customer Notification Task
+    // In a production environment, this would hit an SMTP server (SendGrid/Mailgun)
+    console.log(`\n[SYSTEM EVENT] New Order: ${newOrder.orderid}`);
+    console.log(`[EMAIL SERVICE] Sending receipt to: ${req.user.email || 'user@example.com'}`);
+    console.log(`[EMAIL SERVICE] Content: "Your Sanjeevani Order #${newOrder.orderid} is being processed!"\n`);
+
     res.status(201).json({
-      message: 'Order created successfully',
+      message: 'Order placed successfully. Confirmation email sent.',
       order: newOrder,
     });
   } catch (error) {

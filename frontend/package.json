@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "expo start",
+    "tunnel": "EXPO_TUNNEL_REGION=ap EXPO_TUNNEL_AUTH_TOKEN=3BIKGWVmO2cWbNNtANE42mRVLAG_3dYVLzRips8sTiMzstRte npx expo start --tunnel",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web"

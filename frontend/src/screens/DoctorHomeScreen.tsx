@@ -1,9 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome5 } from '@expo/vector-icons';
 
 const DoctorHomeScreen = ({ navigation }: { navigation: any }) => {
+  const [doctorName, setDoctorName] = useState('Doctor');
+
+  useEffect(() => {
+    const loadDoctorData = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          setDoctorName(user.fullName || user.fullname || 'Doctor');
+        }
+      } catch {
+        setDoctorName('Doctor');
+      }
+    };
+    loadDoctorData();
+  }, []);
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem('token');
@@ -15,7 +31,7 @@ const DoctorHomeScreen = ({ navigation }: { navigation: any }) => {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Doctor Dashboard</Text>
+          <Text style={styles.headerTitle}>Welcome, Dr. {doctorName}</Text>
           <Text style={styles.headerSubtitle}>Manage your practice and patients</Text>
         </View>
 

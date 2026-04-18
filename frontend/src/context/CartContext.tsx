@@ -95,13 +95,24 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             let newCart = [...currentItems];
 
             if (existingIndex > -1) {
+                // Check if adding one more exceeds stock
+                if (newCart[existingIndex].quantity + 1 > (item.stock || 999)) {
+                    import('react-native').then(({ Alert }) => {
+                        Alert.alert('Limit Reached', `Only ${item.stock} units of this item are available.`);
+                    });
+                    return currentItems;
+                }
                 newCart[existingIndex].quantity += 1;
             } else {
+                // Initial add check
+                if (1 > (item.stock || 999)) {
+                    import('react-native').then(({ Alert }) => {
+                        Alert.alert('Out of Stock', 'This item is currently unavailable.');
+                    });
+                    return currentItems;
+                }
                 newCart.push({ ...item, quantity: 1 });
             }
-            // Use current state via useState callback, but we need the latest cartKey.
-            // Since cartKey changes infrequently, we'll let the provider closure handle it 
-            // but wrap in effect if needed. It's safe here.
             AsyncStorage.setItem(cartKey, JSON.stringify(newCart)).catch(e => console.error(e));
             return newCart;
         });
@@ -117,6 +128,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     const updateQuantity = React.useCallback(async (medicineId: number, change: number) => {
         setCartItems((currentItems) => {
+            const itemToUpdate = currentItems.find(i => i.medicineid === medicineId);
+            if (!itemToUpdate) return currentItems;
+
+            // Check stock limit if increasing
+            if (change > 0) {
+                // itemToUpdate might not have the 'stock' property if it wasn't passed initially
+                // so we check if it exists or default to a safe high number
+                const availableStock = (itemToUpdate as any).stock || 999;
+                if (itemToUpdate.quantity + change > availableStock) {
+                    import('react-native').then(({ Alert }) => {
+                        Alert.alert('Limit Reached', `Only ${availableStock} units are available in stock.`);
+                    });
+                    return currentItems;
+                }
+            }
+
             const newCart = currentItems.map((item) => {
                 if (item.medicineid === medicineId) {
                     return { ...item, quantity: Math.max(1, item.quantity + change) };
