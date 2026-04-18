@@ -135,10 +135,10 @@ const adminUpdateInsight = async (req, res) => {
 };
 
 /* 
-  ==================
+  
   APPOINTMENTS -> mapped to `consultations`
   userid, doctorid, scheduledat, meetinglink, status
-  ==================
+  
 */
 
 const resolveDoctorUserId = async (doctorId) => {
@@ -216,9 +216,9 @@ const createAppointment = async (req, res) => {
             return res.status(404).json({ message: 'Doctor user account not found.' });
         }
 
-        // ==========================================
+        // 
         // 1. Double-Booking Validation
-        // ==========================================
+        // 
         const checkQuery = `
             SELECT consultationid FROM consultations 
             WHERE doctorid = $1 

@@ -99,6 +99,15 @@ const AdminDashboardScreen = ({ navigation }: { navigation: any }) => {
       const userData = await AsyncStorage.getItem('user');
       if (userData) {
         const user = JSON.parse(userData);
+        
+        //  PROTECTED ROUTE CHECK 
+        if (user.role !== 'admin') {
+           Alert.alert('Security Alert', 'Unauthorized Access: You do not have administrator privileges.');
+           await AsyncStorage.clear();
+           navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+           return;
+        }
+
         setAdminName(user.fullName || 'Admin');
       }
     } catch {

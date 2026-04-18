@@ -180,7 +180,7 @@ const SanjeevaniStoreScreen = (props: any) => {
         fetchMedicines();
     }, [fetchMedicines]);
 
-    // Server-Side Search with debounce (300ms)
+    // Server-Side Search with debounce (400ms)
     useEffect(() => {
         if (debounceTimer.current) clearTimeout(debounceTimer.current);
         

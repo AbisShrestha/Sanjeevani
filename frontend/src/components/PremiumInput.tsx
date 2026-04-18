@@ -83,6 +83,7 @@ export const PremiumInput = ({
                 className={`bg-white rounded-xl px-4 justify-center border ${getBorderColorClass()} ${getBorderWidthClass()} ${props.multiline ? 'h-auto py-2' : 'h-14'}`}
             >
                 <Animated.Text
+                    pointerEvents="none"
                     style={[
                         labelStyle,
                         { position: 'absolute', left: 16, backgroundColor: 'white', paddingHorizontal: 4, zIndex: 1 }

@@ -52,7 +52,7 @@ const addMedicine = async (req, res) => {
     if (!name || name.trim().length < 3) errors.push('Name must be at least 3 characters');
     if (!categoryId) errors.push('Category is required');
     if (!price || Number(price) <= 0) errors.push('Price must be greater than 0');
-    if (stock !== undefined && Number(stock) < 0) errors.push('Stock cannot be negative');
+    if (stock !== undefined && (isNaN(Number(stock)) || Number(stock) < 0)) errors.push('Stock must be a valid positive number');
     if (!imageUrl) errors.push('Image is required');
 
     if (errors.length > 0) {
@@ -70,8 +70,8 @@ const addMedicine = async (req, res) => {
       benefits: benefits ?? null,
       usageInstructions: usageInstructions ?? null,
       precautions: precautions ?? null,
-      price: Number(price),
-      stock: stock !== undefined ? Number(stock) : 0,
+      price: Number(price) || 0,
+      stock: (stock !== undefined && !isNaN(Number(stock))) ? Number(stock) : 0,
       lowStockThreshold:
         lowStockThreshold !== undefined
           ? Number(lowStockThreshold)
@@ -191,6 +191,14 @@ const updateMedicine = async (req, res) => {
       lowStockThreshold,
       imageUrl,
     } = req.body;
+    
+    const errors = [];
+    if (price !== undefined && (isNaN(Number(price)) || Number(price) <= 0)) errors.push('Price must be a valid positive number');
+    if (stock !== undefined && (isNaN(Number(stock)) || Number(stock) < 0)) errors.push('Stock must be a valid positive number');
+
+    if (errors.length > 0) {
+      return res.status(400).json({ message: errors.join(', ') });
+    }
 
     // Fetch existing medicine to check if we need to delete the old image
     const existingMedicine = await medicineModel.getMedicineById(medicineId);

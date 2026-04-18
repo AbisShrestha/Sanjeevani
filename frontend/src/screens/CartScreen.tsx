@@ -145,7 +145,7 @@ const CartScreen = ({ navigation }: { navigation: any }) => {
                     </View>
                 }
             />
-
+            
             {cartItems.length > 0 && (
                 <View className="absolute bottom-0 left-0 right-0 bg-white p-5 rounded-t-[24px] shadow-2xl pb-8">
                     <View className="flex-row justify-between mb-6">
