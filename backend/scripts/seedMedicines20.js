@@ -227,6 +227,17 @@ const MEDICINES = [
     price: 260,
     stock: 60,
   },
+  {
+    name: 'Yarshaghumba (Cordyceps)',
+    category: 'Capsule',
+    description: 'Premium Himalayan Yarshaghumba (Cordyceps sinensis) capsules sourced from high-altitude regions of Nepal. Known as "Himalayan Gold," this rare medicinal fungus has been used in traditional medicine for centuries to enhance vitality, stamina, and overall wellness.',
+    dosage: '1-2 capsules twice daily with warm milk or water',
+    benefits: 'Boosts energy and stamina naturally, supports respiratory and lung health, enhances kidney function, improves athletic performance and endurance, powerful adaptogen for stress relief, supports healthy aging',
+    usageInstructions: 'Take with warm milk or water after meals. For best results, use consistently for 2-3 months. Ideal for individuals with active lifestyles or those recovering from illness.',
+    precautions: 'Not recommended during pregnancy or breastfeeding. Consult your doctor if on immunosuppressant or blood-thinning medications. May interact with diabetic medications.',
+    price: 1200,
+    stock: 30,
+  },
 ];
 
 // -----------------------------------------------
