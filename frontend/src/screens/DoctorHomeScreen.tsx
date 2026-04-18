@@ -12,7 +12,9 @@ const DoctorHomeScreen = ({ navigation }: { navigation: any }) => {
         const userData = await AsyncStorage.getItem('user');
         if (userData) {
           const user = JSON.parse(userData);
-          setDoctorName(user.fullName || user.fullname || 'Doctor');
+          const rawName = user.fullName || user.fullname || 'Doctor';
+          // Strip existing "Dr." prefix to avoid "Dr. Dr." duplication
+          setDoctorName(rawName.replace(/^Dr\.?\s*/i, ''));
         }
       } catch {
         setDoctorName('Doctor');
