@@ -42,4 +42,14 @@ router.get('/', (req, res) => {
    res.json({ message: 'Sanjeevani API is running...' });
 });
 
+/* 
+   404 FALLBACK for /api
+*/
+router.use((req, res) => {
+   res.status(404).json({ 
+      success: false, 
+      message: `API Route Not Found: ${req.method} ${req.originalUrl}` 
+   });
+});
+
 module.exports = router;
