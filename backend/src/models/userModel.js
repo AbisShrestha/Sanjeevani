@@ -168,6 +168,20 @@ const updateProfileImage = async (userId, imageUrl) => {
 };
 
 /**
+ * UPDATE USER PROFILE (NAME/PHONE)
+ */
+const updateProfile = async (userId, fullName, phone) => {
+  const query = `
+    UPDATE users
+    SET fullName = $1, phone = $2
+    WHERE userId = $3
+    RETURNING userId, fullName, email, phone, role, profileimage
+  `;
+  const result = await pool.query(query, [fullName, phone, userId]);
+  return result.rows[0];
+};
+
+/**
  * GET USER PROFILE
  */
 const getProfile = async (userId) => {
@@ -191,4 +205,5 @@ module.exports = {
   createUserTable,
   updateProfileImage,
   getProfile,
+  updateProfile,
 };

@@ -44,4 +44,22 @@ router.post('/image', verifyToken, profileUpload.single('file'), async (req, res
     }
 });
 
+// PUT /api/profile - Update user details
+router.put('/', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { fullName, phone } = req.body;
+
+        if (!fullName || fullName.trim().length < 3) {
+            return res.status(400).json({ message: 'Full name must be at least 3 characters' });
+        }
+
+        const updatedUser = await require('../models/userModel').updateProfile(userId, fullName, phone);
+        res.json({ message: 'Profile updated successfully', user: updatedUser });
+    } catch (error) {
+        console.error('Update profile error:', error);
+        res.status(500).json({ message: 'Failed to update profile' });
+    }
+});
+
 module.exports = router;

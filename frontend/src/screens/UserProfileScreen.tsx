@@ -27,6 +27,9 @@ const UserProfileScreen = ({ navigation }: { navigation: any }) => {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
 
   // BMI State
   const [height, setHeight] = useState('');
@@ -50,6 +53,8 @@ const UserProfileScreen = ({ navigation }: { navigation: any }) => {
       }
       const res = await api.get('/profile');
       setProfile(res.data);
+      setEditName(res.data.fullname);
+      setEditPhone(res.data.phone || '');
     } catch (error) {
       console.error('Failed to fetch profile:', error);
     } finally {
@@ -134,6 +139,35 @@ const UserProfileScreen = ({ navigation }: { navigation: any }) => {
     setBmiResult({ value: rounded, label, color });
   };
 
+  const handleSaveProfile = async () => {
+    try {
+      if (!editName.trim()) {
+        Alert.alert('Error', 'Name cannot be empty');
+        return;
+      }
+      setLoading(true);
+      const res = await api.put('/profile', { fullName: editName, phone: editPhone });
+      setProfile(res.data.user);
+      
+      // Update local storage
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        const parsed = JSON.parse(userData);
+        parsed.fullName = res.data.user.fullname;
+        parsed.phone = res.data.user.phone;
+        await AsyncStorage.setItem('user', JSON.stringify(parsed));
+      }
+      
+      setIsEditing(false);
+      Alert.alert('Success', 'Profile updated successfully!');
+    } catch (error: any) {
+      console.error('Save profile failed:', error);
+      Alert.alert('Error', error.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogout = async () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
@@ -174,6 +208,12 @@ const UserProfileScreen = ({ navigation }: { navigation: any }) => {
             <FontAwesome5 name="arrow-left" size={20} color="#fff" />
           </TouchableOpacity>
           <Text className="text-[22px] font-extrabold text-white ml-4">My Profile</Text>
+          <TouchableOpacity 
+            onPress={() => isEditing ? handleSaveProfile() : setIsEditing(true)} 
+            className="ml-auto bg-white/20 px-4 py-2 rounded-full"
+          >
+            <Text className="text-white font-bold">{isEditing ? 'Save' : 'Edit'}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Profile Image */}
@@ -372,15 +412,34 @@ const UserProfileScreen = ({ navigation }: { navigation: any }) => {
           <View className="bg-white rounded-[16px] overflow-hidden shadow-sm border border-[#F0F0F0] mb-6">
             <View className="flex-row items-center p-4 border-b border-[#F5F5F5]">
               <FontAwesome5 name="user" size={16} color="#00695C" />
-              <Text className="text-[15px] text-[#37474F] ml-3 font-medium flex-1">{profile?.fullname || 'N/A'}</Text>
+              {isEditing ? (
+                <TextInput
+                  className="flex-1 ml-3 text-[15px] text-[#37474F] p-0"
+                  value={editName}
+                  onChangeText={setEditName}
+                  placeholder="Full Name"
+                />
+              ) : (
+                <Text className="text-[15px] text-[#37474F] ml-3 font-medium flex-1">{profile?.fullname || 'N/A'}</Text>
+              )}
             </View>
             <View className="flex-row items-center p-4 border-b border-[#F5F5F5]">
-              <FontAwesome5 name="envelope" size={16} color="#00695C" />
-              <Text className="text-[15px] text-[#37474F] ml-3 font-medium flex-1">{profile?.email || 'N/A'}</Text>
+              <FontAwesome5 name="envelope" size={16} color="#BDBDBD" />
+              <Text className="text-[15px] text-[#9E9E9E] ml-3 font-medium flex-1">{profile?.email || 'N/A'}</Text>
             </View>
             <View className="flex-row items-center p-4 border-b border-[#F5F5F5]">
               <FontAwesome5 name="phone" size={16} color="#00695C" />
-              <Text className="text-[15px] text-[#37474F] ml-3 font-medium flex-1">{profile?.phone || 'Not set'}</Text>
+              {isEditing ? (
+                <TextInput
+                  className="flex-1 ml-3 text-[15px] text-[#37474F] p-0"
+                  value={editPhone}
+                  onChangeText={setEditPhone}
+                  placeholder="Phone Number"
+                  keyboardType="numeric"
+                />
+              ) : (
+                <Text className="text-[15px] text-[#37474F] ml-3 font-medium flex-1">{profile?.phone || 'Not set'}</Text>
+              )}
             </View>
             <View className="flex-row items-center p-4">
               <FontAwesome5 name="calendar" size={16} color="#00695C" />
@@ -389,6 +448,15 @@ const UserProfileScreen = ({ navigation }: { navigation: any }) => {
               </Text>
             </View>
           </View>
+
+          {isEditing && (
+            <TouchableOpacity
+              className="bg-gray-200 py-4 rounded-[16px] items-center mb-4"
+              onPress={() => setIsEditing(false)}
+            >
+              <Text className="text-gray-700 font-bold">Cancel Editing</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Logout */}
           <TouchableOpacity
