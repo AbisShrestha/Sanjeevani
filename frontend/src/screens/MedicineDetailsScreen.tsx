@@ -27,10 +27,15 @@ const MedicineDetailsScreen = ({ navigation, route }: { navigation: any; route: 
     const { medicine } = route.params;
     const { addToCart: addToCartContext } = useCart();
     const [adding, setAdding] = useState(false);
+    const isOutOfStock = Number(medicine.stock) === 0;
 
     const imageUrl = buildImageUri(medicine.imageurl, 'https://via.placeholder.com/300?text=No+Image');
 
     const addToCart = async () => {
+        if (isOutOfStock) {
+            Alert.alert('Out of Stock', 'This medicine is currently unavailable.');
+            return;
+        }
         setAdding(true);
         try {
             await addToCartContext(medicine);
@@ -102,10 +107,17 @@ const MedicineDetailsScreen = ({ navigation, route }: { navigation: any; route: 
                     </View>
 
                     {/* Category Chip */}
-                    <View style={{ backgroundColor: '#E0F2F1', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8, marginBottom: 24 }}>
-                        <Text style={{ color: '#00695C', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                            {medicine.categoryname || 'Ayurvedic Medicine'}
-                        </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+                        <View style={{ backgroundColor: '#E0F2F1', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 }}>
+                            <Text style={{ color: '#00695C', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                {medicine.categoryname || 'Ayurvedic Medicine'}
+                            </Text>
+                        </View>
+                        {isOutOfStock && (
+                            <View style={{ backgroundColor: '#FFEBEE', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: '#FFCDD2' }}>
+                                <Text style={{ color: '#D32F2F', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase' }}>OUT OF STOCK</Text>
+                            </View>
+                        )}
                     </View>
 
                     <View style={{ marginBottom: 24 }}>
@@ -165,12 +177,12 @@ const MedicineDetailsScreen = ({ navigation, route }: { navigation: any; route: 
                         <Text style={{ color: '#fff', fontSize: 14, fontWeight: 'bold', marginLeft: 8 }}>Track</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={{ flex: 2, backgroundColor: '#00695C', paddingVertical: 16, borderRadius: 16, alignItems: 'center', opacity: adding ? 0.8 : 1 }}
+                        style={{ flex: 2, backgroundColor: isOutOfStock ? '#B0BEC5' : '#00695C', paddingVertical: 16, borderRadius: 16, alignItems: 'center', opacity: (adding || isOutOfStock) ? 0.8 : 1 }}
                         onPress={addToCart}
-                        disabled={adding}
+                        disabled={adding || isOutOfStock}
                     >
                         <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 0.5 }}>
-                            {adding ? 'Adding...' : 'Add to Cart'}
+                            {isOutOfStock ? '⛔ Out of Stock' : adding ? 'Adding...' : 'Add to Cart'}
                         </Text>
                     </TouchableOpacity>
                 </View>
