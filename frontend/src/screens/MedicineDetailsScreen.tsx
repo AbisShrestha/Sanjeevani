@@ -182,7 +182,7 @@ const MedicineDetailsScreen = ({ navigation, route }: { navigation: any; route: 
                         disabled={adding || isOutOfStock}
                     >
                         <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 0.5 }}>
-                            {isOutOfStock ? '⛔ Out of Stock' : adding ? 'Adding...' : 'Add to Cart'}
+                            {isOutOfStock ? 'Out of Stock' : adding ? 'Adding...' : 'Add to Cart'}
                         </Text>
                     </TouchableOpacity>
                 </View>

@@ -48,6 +48,8 @@ const getCategoryIcon = (name: string) => {
 const MedicineItem = React.memo(({ item, viewMode, onNavigate, onAddToCart }: any) => {
     if (!item || !item.name) return null;
 
+    const isOutOfStock = Number(item.stock) === 0;
+
     // Use a clean local variable for image URL
     const imageUrl = useMemo(() => {
         if (!item.imageurl) return 'https://via.placeholder.com/150?text=Sanjeevani';
@@ -84,10 +86,11 @@ const MedicineItem = React.memo(({ item, viewMode, onNavigate, onAddToCart }: an
                         <Text style={styles.itemPrice}>Rs. {item.price}</Text>
                     </View>
                     <Pressable
-                        style={styles.addButton}
-                        onPress={() => onAddToCart(item)}
+                        style={[styles.addButton, isOutOfStock && styles.addButtonDisabled]}
+                        onPress={() => !isOutOfStock && onAddToCart(item)}
+                        disabled={isOutOfStock}
                     >
-                        <Text style={styles.addButtonText}>ADD +</Text>
+                        <Text style={styles.addButtonText}>{isOutOfStock ? 'OUT OF STOCK' : 'ADD +'}</Text>
                     </Pressable>
                 </View>
             </Pressable>
@@ -116,10 +119,11 @@ const MedicineItem = React.memo(({ item, viewMode, onNavigate, onAddToCart }: an
                 <View style={styles.listFooter}>
                     <Text style={styles.itemPrice}>Rs. {item.price}</Text>
                     <Pressable
-                        style={styles.addToCartButton}
-                        onPress={() => onAddToCart(item)}
+                        style={[styles.addToCartButton, isOutOfStock && styles.addButtonDisabled]}
+                        onPress={() => !isOutOfStock && onAddToCart(item)}
+                        disabled={isOutOfStock}
                     >
-                        <Text style={styles.addToCartText}>ADD TO CART</Text>
+                        <Text style={styles.addToCartText}>{isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}</Text>
                     </Pressable>
                 </View>
             </View>
@@ -519,7 +523,11 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
         fontSize: 12,
-    }
+    },
+    addButtonDisabled: {
+        backgroundColor: '#B0BEC5',
+        opacity: 0.7,
+    },
 });
 
 export default SanjeevaniStoreScreen;
