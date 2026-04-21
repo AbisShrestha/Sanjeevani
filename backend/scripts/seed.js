@@ -13,9 +13,7 @@
 const pool = require('./config/db');
 const bcrypt = require('bcrypt');
 
-// ═══════════════════════════════════════════
 // 1. CATEGORIES
-// ═══════════════════════════════════════════
 const CATEGORIES = [
   { name: 'Herbs', description: 'Natural Ayurvedic herbs and plant-based remedies' },
   { name: 'Capsule', description: 'Herbal capsules for easy consumption' },
@@ -25,9 +23,7 @@ const CATEGORIES = [
   { name: 'Powder', description: 'Churna and herbal powder formulations' },
 ];
 
-// ═══════════════════════════════════════════
 // 2. MEDICINES
-// ═══════════════════════════════════════════
 const MEDICINES = [
   {
     name: 'Ashwagandha Capsules',
@@ -141,9 +137,7 @@ const MEDICINES = [
   },
 ];
 
-// ═══════════════════════════════════════════
 // 3. DEFAULT ADMIN ACCOUNT
-// ═══════════════════════════════════════════
 const ADMIN_USER = {
   fullName: 'Abis shrestha',
   email: 'abis@gmail.com',
@@ -152,9 +146,7 @@ const ADMIN_USER = {
   role: 'admin',
 };
 
-// ═══════════════════════════════════════════
 // SEED FUNCTIONS
-// ═══════════════════════════════════════════
 
 const seedCategories = async () => {
   console.log('\n📦 Seeding Categories...');
@@ -245,14 +237,10 @@ const seedAdmin = async () => {
   }
 };
 
-// ═══════════════════════════════════════════
 // MAIN
-// ═══════════════════════════════════════════
 
 const seed = async () => {
-  console.log('🌱 ═══════════════════════════════════════');
-  console.log('   SANJEEVANI DATABASE SEEDER');
-  console.log('═══════════════════════════════════════════');
+  console.log('Sanjeevani Database Seeder: Initializing...');
 
   try {
     // Ensure tables exist first
@@ -268,9 +256,6 @@ const seed = async () => {
     await seedMedicines();
     await seedAdmin();
 
-    console.log('\n🎉 ═══════════════════════════════════════');
-    console.log('   SEEDING COMPLETE!');
-    console.log('═══════════════════════════════════════════');
     console.log('\n📋 Summary:');
     console.log(`   Categories: ${CATEGORIES.length}`);
     console.log(`   Medicines:  ${MEDICINES.length}`);

@@ -125,9 +125,7 @@ const DOCTORS = [
 ];
 
 const seedDoctorUsers = async () => {
-    console.log('===========================================');
-    console.log('  SANJEEVANI - Register 10 Doctor Users');
-    console.log('===========================================\n');
+    console.log('Registering Doctor Users...');
 
     let usersCreated = 0;
     let doctorsCreated = 0;
@@ -135,7 +133,7 @@ const seedDoctorUsers = async () => {
 
     for (const doc of DOCTORS) {
         try {
-            // --- STEP 1: Create user account ---
+            // Check for existing user
             const existingUser = await pool.query(
                 `SELECT userid FROM users WHERE LOWER(email) = LOWER($1)`,
                 [doc.email]
@@ -144,7 +142,7 @@ const seedDoctorUsers = async () => {
             let userId;
             if (existingUser.rows.length > 0) {
                 userId = existingUser.rows[0].userid;
-                console.log(`  SKIP  User ${doc.email} already exists (ID: ${userId})`);
+                console.log(`Skipped: User ${doc.email} already exists.`);
             } else {
                 const passwordHash = await bcrypt.hash(doc.password, 10);
                 const userResult = await pool.query(
@@ -155,17 +153,16 @@ const seedDoctorUsers = async () => {
                 );
                 userId = userResult.rows[0].userid;
                 usersCreated++;
-                console.log(`  OK    User created: ${doc.email} / ${doc.password} (ID: ${userId})`);
+                console.log(`Success: User created for ${doc.email}`);
             }
 
-            // --- STEP 2: Create rich doctor profile ---
+            // Check for existing doctor profile
             const existingDoctor = await pool.query(
                 `SELECT id FROM doctors WHERE LOWER(name) = LOWER($1)`,
                 [doc.fullName]
             );
 
             if (existingDoctor.rows.length > 0) {
-                console.log(`  SKIP  Doctor profile "${doc.fullName}" already exists`);
                 skipped++;
                 continue;
             }
@@ -176,20 +173,21 @@ const seedDoctorUsers = async () => {
                 [doc.fullName, doc.specialty, doc.qualification, doc.experience, doc.hospital, doc.phone, doc.bio]
             );
             doctorsCreated++;
-            console.log(`  OK    Doctor profile created: ${doc.fullName} - ${doc.specialty}`);
+            console.log(`Success: Doctor profile created for ${doc.fullName}`);
 
         } catch (err) {
-            console.error(`  FAIL  ${doc.fullName}: ${err.message}`);
+            console.error(`Error for ${doc.fullName}: ${err.message}`);
         }
     }
 
-    console.log('\n--- Summary ---');
-    console.log(`  User accounts created:  ${usersCreated}`);
-    console.log(`  Doctor profiles created: ${doctorsCreated}`);
-    console.log(`  Skipped (existing):      ${skipped}`);
-    console.log('\n--- Login Credentials ---');
+    console.log('\nSeed Summary:');
+    console.log(`- User accounts created:  ${usersCreated}`);
+    console.log(`- Doctor profiles created: ${doctorsCreated}`);
+    console.log(`- Skipped:                 ${skipped}`);
+    
+    console.log('\nDoctor Access List:');
     for (const doc of DOCTORS) {
-        console.log(`  ${doc.fullName.padEnd(25)} | ${doc.email.padEnd(22)} | ${doc.password}`);
+        console.log(`- ${doc.fullName}: ${doc.email} / ${doc.password}`);
     }
     console.log('');
     process.exit(0);

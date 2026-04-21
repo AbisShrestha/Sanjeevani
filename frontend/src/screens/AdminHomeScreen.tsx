@@ -46,9 +46,7 @@ interface AdminActionProps {
   onPress: () => void;
 }
 
-/* ============================
-   SCREEN
-============================ */
+
 
 const AdminDashboardScreen = ({ navigation }: { navigation: any }) => {
   // Using props instead of useNavigation hook

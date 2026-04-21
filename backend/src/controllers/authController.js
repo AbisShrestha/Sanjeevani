@@ -2,9 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
 
-/* 
-   VALIDATION HELPERS
-*/
+// Validation helpers
 const isValidEmail = (email) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -17,9 +15,7 @@ const isValidPhone = (phone) =>
 const isStrongPassword = (password) =>
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?#&_]).{8,}$/.test(password);
 
-/* 
-   REGISTER
- */
+// Register new user
 const register = async (req, res) => {
   try {
     const { fullName, email, password, phone } = req.body;
@@ -94,9 +90,7 @@ const register = async (req, res) => {
   }
 };
 
-/*
-   LOGIN
- */
+// Login
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -143,12 +137,9 @@ const login = async (req, res) => {
   }
 };
 
-/*
-   GET ALL USERS (ADMIN ONLY)
- */
+// Get all users (admin)
 const getAllUsers = async (req, res) => {
   try {
-    // In a real app, check if req.user.role === 'admin' here
     const { search } = req.query;
     const users = await userModel.getAllUsers(search);
     res.json(users);
@@ -158,9 +149,7 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-/* 
-   ADMIN – GET ALL DOCTORS
- */
+// Get all doctors (admin)
 const getAllDoctors = async (req, res) => {
   try {
     const { search } = req.query;
@@ -172,15 +161,10 @@ const getAllDoctors = async (req, res) => {
   }
 };
 
-/*
-   DELETE USER (ADMIN ONLY)
- */
+// Delete user (admin)
 const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    // We can use updateUserStatus to soft delete, or add a hard delete method
-    // For now, let's assume hard delete or status update based on requirement.
-    // I will use updateUserStatus for now to just deactivate them.
     await userModel.updateUserStatus(id, false);
     res.json({ message: 'User deactivated successfully' });
   } catch (error) {
@@ -189,9 +173,7 @@ const deleteUser = async (req, res) => {
   }
 };
 
-/*
-   UPDATE USER ROLE (ADMIN ONLY)
- */
+// Update user role (admin)
 const updateUserRole = async (req, res) => {
   try {
     const { id } = req.params;
@@ -209,9 +191,7 @@ const updateUserRole = async (req, res) => {
   }
 };
 
-/*
-   UPDATE USER STATUS (ADMIN ONLY)
- */
+// Update user status (admin)
 const updateUserStatus = async (req, res) => {
   try {
     const { id } = req.params;

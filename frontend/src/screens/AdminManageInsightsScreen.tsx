@@ -147,7 +147,7 @@ const AdminManageInsightsScreen = ({ navigation }: { navigation: any }) => {
             <View className="bg-white rounded-2xl mb-4 shadow-sm overflow-hidden border border-[#f0f0f0]">
                 {imageUri ? (
                     <Image
-                        source={{ uri: imageUri }}
+                        source={{ uri: imageUri! }}
                         className="w-full h-[160px]"
                         resizeMode="cover"
                     />

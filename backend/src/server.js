@@ -22,7 +22,7 @@ const PORT = process.env.PORT || 4000;
     }
 })();
 
-// IMPORTANT 
+// Start server on all interfaces
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });

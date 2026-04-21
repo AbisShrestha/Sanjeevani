@@ -1,9 +1,6 @@
 import api from './api';
 
-/* 
-   TYPES
-   Define what a "Medicine" looks like so Typescript can help us avoid typos.
- */
+// Medicine data models
 export interface AddMedicinePayload {
   name: string;
   categoryId: number;
@@ -18,10 +15,7 @@ export interface AddMedicinePayload {
   imageUrl?: string | null;
 }
 
-/* 
-   GET ALL MEDICINES (with optional server-side search)
-   Supports query params: search, category, sort
- */
+// Get medicines with search/filter support
 export const getAllMedicines = async (params?: {
   search?: string;
   category?: string;
@@ -44,28 +38,19 @@ export const getAllMedicines = async (params?: {
   return response.data;
 };
 
-/* 
-   DELETE MEDICINE
-   Tell the server to permanently remove a medicine by its ID.
- */
+// Delete medicine record
 export const deleteMedicine = async (medicineId: number) => {
   const response = await api.delete(`/medicines/${medicineId}`);
   return response.data;
 };
 
-/* 
-   ADD MEDICINE
-   Send new medicine data to the server to save it to the database.
- */
+// Add new medicine record
 export const addMedicine = async (data: AddMedicinePayload) => {
   const response = await api.post('/medicines', data);
   return response.data;
 };
 
-/* 
-   UPDATE MEDICINE
-   Send modified data to update an existing medicine.
- */
+// Update existing medicine record
 export const updateMedicine = async (
   medicineId: number,
   data: Partial<AddMedicinePayload>

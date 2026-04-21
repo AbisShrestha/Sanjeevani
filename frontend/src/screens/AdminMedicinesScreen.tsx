@@ -124,7 +124,7 @@ const AdminMedicinesScreen = ({ navigation }: { navigation: any }) => {
       <View className="bg-white rounded-2xl p-3.5 mb-3.5 shadow-sm">
         <View className="flex-row">
           <Image
-            source={{ uri: imageUri }}
+            source={{ uri: imageUri! }}
             className="w-[70px] h-[70px] rounded-xl bg-[#eee]"
           />
           <View className="flex-1 ml-3">

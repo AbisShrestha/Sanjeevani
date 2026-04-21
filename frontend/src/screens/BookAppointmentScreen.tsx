@@ -146,7 +146,7 @@ const BookAppointmentScreen = ({ navigation, route }: { navigation: any; route: 
 
                 {/* DOCTOR INFO CARD */}
                 <View style={styles.doctorCard}>
-                    <Image source={{ uri: displayImage }} style={styles.doctorImg} />
+                    <Image source={{ uri: displayImage! }} style={styles.doctorImg} />
                     <View style={styles.doctorInfo}>
                         <Text style={styles.doctorName}>{doctor.name}</Text>
                         <Text style={styles.doctorSpecialty}>{doctor.specialty}</Text>

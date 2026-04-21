@@ -4,9 +4,7 @@ const router = express.Router();
 const medicineController = require('../controllers/medicineController');
 const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
 
-/* 
-   ADMIN ROUTES (JSON ONLY)
- */
+// Admin routes
 
 router.post(
   '/',
@@ -43,9 +41,7 @@ router.get(
   medicineController.getLowStockMedicines
 );
 
-/* 
-   PUBLIC ROUTES
-*/
+// Public routes
 
 router.get('/', medicineController.getMedicines);
 router.get('/:medicineId', medicineController.getMedicine);

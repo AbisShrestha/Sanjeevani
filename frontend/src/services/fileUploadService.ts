@@ -2,9 +2,7 @@ import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import api, { SERVER_URL } from './api';
 
-/* 
-  This function uploads an image to YOUR backend server.
-*/
+// Upload image to server
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const uploadImage = async (asset: ImagePicker.ImagePickerAsset, folder?: string) => {
@@ -36,7 +34,7 @@ export const uploadImage = async (asset: ImagePicker.ImagePickerAsset, folder?: 
       },
     });
 
-    // 4. Return the full URL of the uploaded image
+
     // Backend returns relative path like "/uploads/abc.jpg"
     return `${SERVER_URL}${response.data.fileUrl}`;
 

@@ -1,11 +1,9 @@
 const userModel = require('../models/userModel');
-const pool = require('../config/db'); // Use shared pool
+const pool = require('../config/db');
 
 // ADD DOCTOR (Admin only)
 const addDoctor = async (req, res) => {
     try {
-        // Frontend sends: name, specialty, experience, hospital, phone, bio, image
-        // We default qualification if missing, as frontend doesn't seem to send it currently
         const { name, specialty, qualification, experience, hospital, phone, bio, image } = req.body;
 
         if (!name || name.trim().length < 3) {
@@ -14,7 +12,7 @@ const addDoctor = async (req, res) => {
         if (!specialty) {
             return res.status(400).json({ error: "Specialty is required" });
         }
-        // Image validation is good but strict. Frontend handles upload before calling this.
+
 
         const query = `
             INSERT INTO doctors (name, specialty, qualification, experience, hospital, phone, bio, image)
@@ -58,8 +56,7 @@ const deleteDoctor = async (req, res) => {
     }
 };
 
-// GET ALL DOCTORS (Public)
-// Only serves from the dedicated 'doctors' table where profiles are properly curated
+// Get all doctors (public)
 const getAllDoctors = async (req, res) => {
     try {
         let allDoctors;
@@ -93,7 +90,7 @@ const updateDoctor = async (req, res) => {
         const { name, specialty, qualification, experience, hospital, phone, bio, image } = req.body;
 
         if (typeof id === 'string' && id.startsWith('u-')) {
-            // "Promote" the User-Doctor into the official doctors table with rich data
+            // Insert into doctors table as a promoted listing
             const insertQuery = `
                 INSERT INTO doctors (name, specialty, qualification, experience, hospital, phone, bio, image)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)

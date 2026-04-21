@@ -4,7 +4,19 @@ node_modules/
 # Environment variables
 .env
 
+# Logs
+*.log
+npm-debug.log*
+
+# System files
+.DS_Store
+
+# User uploads (runtime data)
+uploads/*
+!uploads/.gitkeep
+
 # Build and cache
 dist/
 build/
 .cache
+

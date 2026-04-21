@@ -75,9 +75,7 @@ Synergy tip: Combining Brahmi with Shankhpushpi creates an even more powerful br
 ];
 
 const resetAndSeed = async () => {
-  console.log('===========================================');
-  console.log('  SANJEEVANI - RESET and Re-seed Insights');
-  console.log('===========================================\n');
+  console.log('Resetting and Re-seeding Insights...');
 
   // Ensure articles table exists
   await pool.query(`
@@ -91,13 +89,13 @@ const resetAndSeed = async () => {
     );
   `);
 
-  // Step 1: Count and delete ALL old insights
+  // Clear existing insights
   const countResult = await pool.query('SELECT COUNT(*) FROM articles');
   const oldCount = countResult.rows[0].count;
   await pool.query('DELETE FROM articles');
-  console.log(`  CLEARED ${oldCount} old insight(s) from the database.\n`);
+  console.log(`Cleared ${oldCount} records from the database.`);
 
-  // Step 2: Re-insert with correct doctor authors
+  // Re-insert with correct doctor authors
   let added = 0;
 
   for (const insight of INSIGHTS) {
@@ -108,7 +106,7 @@ const resetAndSeed = async () => {
       );
 
       if (authorResult.rows.length === 0) {
-        console.log(`  FAIL  Author ${insight.authorEmail} not found. Run seedDoctorUsers.js first!`);
+        console.log(`Author ${insight.authorEmail} not found. Ensure doctor users exist first.`);
         continue;
       }
 
@@ -118,14 +116,14 @@ const resetAndSeed = async () => {
         `INSERT INTO articles (title, content, imageurl, authorid) VALUES ($1, $2, $3, $4)`,
         [insight.title, insight.content, '', authorId]
       );
-      console.log(`  OK    "${insight.title.substring(0, 45)}..." by ${insight.authorEmail}`);
+      console.log(`Inserted: "${insight.title.substring(0, 45)}..."`);
       added++;
     } catch (err) {
-      console.error(`  FAIL  ${insight.title.substring(0, 45)}: ${err.message}`);
+      console.error(`Error inserting ${insight.title.substring(0, 45)}: ${err.message}`);
     }
   }
 
-  console.log(`\n--- Done! Inserted ${added} fresh insights with real doctor authors. ---`);
+  console.log(`\nRe-seeding complete. Inserted ${added} insights.`);
   process.exit(0);
 };
 

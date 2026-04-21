@@ -1,10 +1,10 @@
 const pool = require('../config/db');
 
 /* 
-  ==================
+  
   INSIGHTS -> mapped to `articles`
   title, content, imageurl, authorid
-  ==================
+  
 */
 const createInsight = async (req, res) => {
     try {
@@ -134,12 +134,7 @@ const adminUpdateInsight = async (req, res) => {
     }
 };
 
-/* 
-  
-  APPOINTMENTS -> mapped to `consultations`
-  userid, doctorid, scheduledat, meetinglink, status
-  
-*/
+// Appointment management
 
 const resolveDoctorUserId = async (doctorId) => {
     if (typeof doctorId === 'string' && doctorId.startsWith('u-')) {
@@ -330,13 +325,7 @@ const updateAppointmentStatus = async (req, res) => {
     }
 };
 
-/* 
-  ==================
-  PATIENT RECORDS -> mapped to `userhealthinputs`
-  userid, bmi, lifestylenotes. 
-  Since doctor creates this for a patient, we store Diagnosis/Prescription inside lifestylenotes formatted.
-  ==================
-*/
+// Patient records management
 const createPatientRecord = async (req, res) => {
     try {
         const { patientId, diagnosis, prescription, notes } = req.body;

@@ -86,9 +86,7 @@ Synergy tip: Combining Brahmi with Shankhpushpi creates an even more powerful br
 ];
 
 const seedInsights = async () => {
-  console.log('===========================================');
-  console.log('  SANJEEVANI - Seeding 6 Medicinal Insights');
-  console.log('===========================================\n');
+  console.log('Seeding Medicinal Insights...');
 
   // Ensure articles table exists
   await pool.query(`
@@ -144,7 +142,7 @@ const seedInsights = async () => {
     }
   }
 
-  console.log(`\n--- Done! Added: ${added}, Skipped: ${skipped} ---`);
+  console.log(`\nSeeding complete. Added: ${added}, Skipped: ${skipped}`);
   process.exit(0);
 };
 

@@ -240,14 +240,9 @@ const MEDICINES = [
   },
 ];
 
-// -----------------------------------------------
-// SEED FUNCTION
-// -----------------------------------------------
-const seedNewMedicines = async () => {
-  console.log('===========================================');
-  console.log('  SANJEEVANI - Seeding 20 New Medicines');
-  console.log('===========================================\n');
-
+// Seed function
+const seedMedicines = async () => {
+  console.log('Seeding 20 Extended Medicines...');
   let added = 0;
   let skipped = 0;
 
@@ -302,7 +297,7 @@ const seedNewMedicines = async () => {
     }
   }
 
-  console.log(`\n--- Done! Added: ${added}, Skipped: ${skipped} ---`);
+  console.log(`\nSeeding complete. Added: ${added}, Skipped: ${skipped}`);
   process.exit(0);
 };
 

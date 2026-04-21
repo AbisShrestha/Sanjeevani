@@ -3,9 +3,7 @@ const router = express.Router();
 const doctorFeaturesController = require('../controllers/doctorFeaturesController');
 const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware');
 
-// ==============================
-// PUBLIC / GENERAL USER ROUTES
-// ==============================
+// User routes
 
 // View all insights (Blogs) across all doctors
 router.get('/insights/all', doctorFeaturesController.getAllInsights);
@@ -22,15 +20,11 @@ router.post('/appointments/check', verifyToken, doctorFeaturesController.checkAp
 // User books an appointment with a doctor
 router.post('/appointments', verifyToken, doctorFeaturesController.createAppointment);
 
-// ==============================
-// ADMIN ROUTES
-// ==============================
+// Admin routes
 router.put('/insights/:id', verifyToken, authorizeRoles('admin'), doctorFeaturesController.adminUpdateInsight);
 router.delete('/insights/admin/:id', verifyToken, authorizeRoles('admin'), doctorFeaturesController.adminDeleteInsight);
 
-// ==============================
-// DOCTOR ONLY ROUTES
-// ==============================
+// Doctor routes
 
 // Insights (Doctor Blogs/Articles)
 router.post('/insights', verifyToken, authorizeRoles('doctor'), doctorFeaturesController.createInsight);

@@ -6,27 +6,21 @@ const routes = require('./routes');
 
 const app = express();
 
-/* ============================
-   GLOBAL MIDDLEWARES
-============================ */
+// Middleware setup
 
-// Enable CORS
+
 app.use(cors());
 
-// Parse JSON bodies
+
 app.use(express.json());
 
-/* 
-   REQUEST LOGGER
- */
+// Log incoming requests
 app.use((req, res, next) => {
   console.log(`[${req.method}] ${req.url}`);
   next();
 });
 
-/* 
-   ROUTES
- */
+
 // Serve static files from uploads directory
 app.use('/uploads', express.static('uploads'));
 
@@ -36,15 +30,11 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api', routes);
 
-/* 
-   HEALTH CHECK / TEST
- */
+
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'UP', message: 'Sanjeevani Backend: LATEST_VERSION_LIVE!' });
 });
-/* 
-   404 FALLBACK (Route Not Found)
-*/
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({ 
     success: false,
@@ -52,9 +42,7 @@ app.use((req, res) => {
   });
 });
 
-/* 
-   GLOBAL ERROR HANDLER (Should be last)
- */
+// Global error handler
 app.use((err, req, res, next) => {
   console.error(`[ERROR] ${req.method} ${req.url}`, err);
   res.status(err.status || 500).json({

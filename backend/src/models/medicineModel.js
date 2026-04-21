@@ -1,11 +1,7 @@
 const pool = require('../config/db');
 
-/* 
-   ADMIN: ADD NEW MEDICINE
- */
-/* 
-    CREATE TABLES (CATEGORIES & MEDICINES)
- */
+// Admin medicines management
+// Table initialization
 const createCategoryTable = async () => {
   const query = `
       CREATE TABLE IF NOT EXISTS categories (
@@ -58,9 +54,7 @@ const createMedicineTable = async () => {
   }
 };
 
-/* 
-   ADMIN: ADD NEW MEDICINE
- */
+// Add new medicine
 const createMedicine = async (medicine) => {
   const {
     name,
@@ -113,9 +107,7 @@ const createMedicine = async (medicine) => {
   return result.rows[0];
 };
 
-/* 
-   GET ALL MEDICINES
- */
+// Get all medicines
 const getAllMedicines = async () => {
   const query = `
     SELECT 
@@ -141,10 +133,7 @@ const getAllMedicines = async () => {
   return result.rows;
 };
 
-/* 
-   SEARCH MEDICINES (Server-Side Query)
-   Supports: text search (ILIKE), category filter, price sort
- */
+// Search medicines with filters
 const searchMedicines = async ({ search, category, sortBy }) => {
   let query = `
     SELECT 
@@ -196,9 +185,7 @@ const searchMedicines = async ({ search, category, sortBy }) => {
   return result.rows;
 };
 
-/* 
-   GET SINGLE MEDICINE
- */
+// Get medicine by ID
 const getMedicineById = async (medicineId) => {
   const query = `
     SELECT 
@@ -213,9 +200,7 @@ const getMedicineById = async (medicineId) => {
   return result.rows[0];
 };
 
-/* 
-   ADMIN: UPDATE MEDICINE
- */
+// Update medicine record
 const updateMedicine = async (medicineId, data) => {
   const {
     name,
@@ -269,9 +254,7 @@ const updateMedicine = async (medicineId, data) => {
   return result.rowCount > 0;
 };
 
-/* 
-   ADMIN: UPDATE MEDICINE STOCK
- */
+// Update stock levels
 const updateStock = async (medicineId, stock) => {
   const query = `
     UPDATE medicines
@@ -286,9 +269,7 @@ const updateStock = async (medicineId, stock) => {
   return result.rowCount > 0;
 };
 
-/* 
-   ADMIN: PERMANENT DELETE MEDICINE
- */
+// Permanent delete medicine record
 const deleteMedicine = async (medicineId) => {
   const query = `
     DELETE FROM medicines
@@ -300,9 +281,7 @@ const deleteMedicine = async (medicineId) => {
   return result.rowCount > 0;
 };
 
-/* 
-   ADMIN: LOW STOCK ALERT
- */
+// Low stock alerts
 const getLowStockMedicines = async (search = '') => {
   let query = `
     SELECT 

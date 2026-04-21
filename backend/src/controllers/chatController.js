@@ -3,15 +3,9 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-/* 
-  Global Init removed to prevent startup crashes. 
-  Model is now initialized inside getChatResponse.
-*/
+// Model is initialized per-request to prevent startup crashes
 
-/*
-   SYSTEM INSTRUCTION
-   Strictly enforces the Medical/Ayurvedic domain.
-*/
+// System instruction for Ayurvedic domain enforcement
 const SYSTEM_INSTRUCTION = `
 You are Dr. Sanjeevani, an AI Ayurveda Expert.
 Your purpose is to provide holistic health advice based on Ayurvedic principles.
@@ -48,7 +42,7 @@ const getChatResponse = async (req, res) => {
             return res.end();
         }
 
-        /* Real AI Logic */
+
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({
             model: "gemini-2.5-flash",
@@ -68,11 +62,11 @@ const getChatResponse = async (req, res) => {
         for await (const chunk of result.stream) {
             const chunkText = chunk.text();
             if (chunkText) {
-                // Split the AI chunk into words/characters to force a beautiful "typewriter" effect on the app!
+                // Split into small chunks for streaming effect
                 const chars = chunkText.split(/(?<=\s|-|,|\.)|(?=\n)|(?<=\n)/);
                 for (const char of chars) {
                     res.write(`data: ${JSON.stringify({ text: char })}\n\n`);
-                    await new Promise(r => setTimeout(r, 20)); // Delay slightly to make it look like human typing!
+                    await new Promise(r => setTimeout(r, 20));
                 }
             }
         }
@@ -82,27 +76,22 @@ const getChatResponse = async (req, res) => {
         try {
             const fallbackReply = getFallbackResponse(req.body.message);
             
-            // To maintain a nice UX, stream the fallback message artificially by splitting by spaces or sentences
-            const words = fallbackReply.split(/(?<=\s)/); // Split keeping the spaces
+            // Stream fallback response with slight delay per word
+            const words = fallbackReply.split(/(?<=\s)/);
             
             for (const word of words) {
                 res.write(`data: ${JSON.stringify({ text: word })}\n\n`);
-                // Simulate network/typing delay
                 await new Promise(resolve => setTimeout(resolve, 30));
             }
         } catch (fbError) {
              res.write(`data: ${JSON.stringify({ error: "An unexpected error occurred." })}\n\n`);
         }
     } finally {
-        res.end(); // Finish SSE connection
+        res.end();
     }
 };
 
-/* 
-  =========================================
-  OFFLINE KNOWLEDGE BASE (Source of Truth)
-  =========================================
-*/
+// Offline fallback knowledge base
 const AYURVEDIC_DB = {
     DISEASES: {
         "acidity": {
@@ -222,9 +211,7 @@ const AYURVEDIC_DB = {
     }
 };
 
-/*
-  ADVANCED FALLBACK ENGINE
-*/
+// Fallback response engine for when Gemini API is unavailable
 const getFallbackResponse = (query) => {
     const lower = query.toLowerCase();
 

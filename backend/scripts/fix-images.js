@@ -26,7 +26,7 @@ const fixImages = async () => {
     );
     console.log(`✅ Fixed ${res3.rowCount} doctors images`);
 
-    console.log('Image fix complete! All images will now load via your new Google Cloud server IP.');
+    console.log('Image paths updated to relative paths successfully.');
   } catch (err) {
     console.error('Error fixing images:', err);
   } finally {

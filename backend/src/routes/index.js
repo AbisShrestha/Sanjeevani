@@ -14,7 +14,7 @@ const reportRoutes = require('./reportRoutes');
 let profileRoutes;
 try {
   profileRoutes = require('./profileRoutes');
-  console.log('[Routes] profileRoutes loaded successfully');
+  console.log('[Routes] profileRoutes loaded');
 } catch (err) {
   console.error('[Routes] FAILED to load profileRoutes:', err.message);
   profileRoutes = express.Router(); // fallback empty router

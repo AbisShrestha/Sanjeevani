@@ -64,7 +64,7 @@ const DoctorInsightsScreen = () => {
             setSubmitting(true);
             let uploadedUrl = '';
             if (imageAsset) {
-                uploadedUrl = await uploadImage(imageAsset);
+                uploadedUrl = (await uploadImage(imageAsset!)) || '';
             }
 
             await createInsight(title, content, uploadedUrl);
@@ -106,7 +106,7 @@ const DoctorInsightsScreen = () => {
     const renderItem = ({ item }: { item: Insight }) => (
         <View style={styles.card}>
             {item.image_url ? (
-                <Image source={{ uri: item.image_url }} style={styles.cardImage} />
+                <Image source={{ uri: item.image_url! }} style={styles.cardImage} />
             ) : null}
             <View style={styles.cardContent}>
                 <Text style={styles.cardTitle}>{item.title}</Text>
@@ -128,7 +128,7 @@ const DoctorInsightsScreen = () => {
 
                     <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
                         {imageAsset ? (
-                            <Image source={{ uri: imageAsset.uri }} style={styles.previewImage} />
+                            <Image source={{ uri: imageAsset.uri! }} style={styles.previewImage} />
                         ) : (
                             <View style={styles.imagePlaceholder}>
                                 <FontAwesome5 name="camera" size={30} color="#999" />
@@ -176,12 +176,12 @@ const DoctorInsightsScreen = () => {
                 renderItem={renderItem}
                 contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
                 ListEmptyComponent={
-                    !loading && (
+                    !loading ? (
                         <View style={styles.center}>
                             <FontAwesome5 name="lightbulb" size={60} color="#ccc" />
                             <Text style={styles.emptyText}>You haven't written any insights yet.</Text>
                         </View>
-                    )
+                    ) : null
                 }
             />
 

@@ -116,7 +116,7 @@ const AdminStockAlertsScreen = ({ navigation }: { navigation: any }) => {
 
         <View className="flex-row">
           <Image 
-            source={{ uri: buildImageUri(item.imageurl) }} 
+            source={{ uri: buildImageUri(item.imageurl)! }} 
             className="w-[70px] h-[70px] rounded-xl bg-[#FAFAFA] border border-[#F5F5F5]" 
             resizeMode="contain" 
           />

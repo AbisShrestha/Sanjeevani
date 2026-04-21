@@ -213,7 +213,7 @@ const AdminAddMedicineScreen = ({ navigation }: { navigation: any }) => {
             activeOpacity={0.8}
           >
             {imageUri ? (
-              <Image source={{ uri: imageUri }} className="w-full h-full" resizeMode="contain" />
+              <Image source={{ uri: imageUri! }} className="w-full h-full" resizeMode="contain" />
             ) : (
               <View className="flex-1 justify-center items-center bg-[#E8F5E9]">
                 <View className="w-[50px] h-[50px] rounded-full bg-white justify-center items-center mb-3">

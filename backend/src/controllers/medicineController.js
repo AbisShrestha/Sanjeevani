@@ -25,13 +25,10 @@ const deleteImageFile = (imageUrl) => {
   }
 };
 
-/* 
-   ADMIN: ADD MEDICINE
-   This function receives data from the App and saves it to the Database.
-*/
+// Add new medicine (admin only)
 const addMedicine = async (req, res) => {
   try {
-    // 1. Get all the details from the "Request Body" (what the app sent us)
+
     const {
       name,
       categoryId,
@@ -47,7 +44,7 @@ const addMedicine = async (req, res) => {
     } = req.body;
 
 
-    // 2. Strict Validation
+    // Validation
     const errors = [];
     if (!name || name.trim().length < 3) errors.push('Name must be at least 3 characters');
     if (!categoryId) errors.push('Category is required');
@@ -61,7 +58,7 @@ const addMedicine = async (req, res) => {
 
 
 
-    // 4. Organize the data nicely before saving
+
     const medicineData = {
       name: name.trim(),
       categoryId: categoryId ? Number(categoryId) : null,
@@ -79,7 +76,7 @@ const addMedicine = async (req, res) => {
       imageUrl: imageUrl ?? null,
     };
 
-    // Helper to prevent "Bad Paths" forever
+    // Image URL normalization
     const sanitizeImageUrl = (url) => {
       if (!url) return null;
       // 1. Replace Windows backslashes
@@ -98,19 +95,19 @@ const addMedicine = async (req, res) => {
       return clean;
     };
 
-    // 5. Ask the "Model" (Database helper) to save it
+
     // Sanitize image URL one last time before DB
     medicineData.imageUrl = sanitizeImageUrl(medicineData.imageUrl);
 
     const newMedicine = await medicineModel.createMedicine(medicineData);
 
-    // 6. Send a "Success" message back to the App
+
     res.status(201).json({
       message: 'Medicine added successfully',
       data: newMedicine,
     });
   } catch (error) {
-    // 7. If something crashed, tell the App "Internal Server Error"
+
     console.error('Error adding medicine:', error);
 
     if (error.code === '23503') {
@@ -123,10 +120,7 @@ const addMedicine = async (req, res) => {
   }
 };
 
-/* 
-   GET ALL MEDICINES (with optional server-side search)
-   Query params: ?search=text&category=Herbs&sort=lowHigh|highLow
-*/
+// Get all medicines with search and filter support
 const getMedicines = async (req, res) => {
   try {
     const { search, category, sort } = req.query;
@@ -277,17 +271,17 @@ const deleteMedicine = async (req, res) => {
   try {
     const { medicineId } = req.params;
 
-    // 1. Get Medicine Details First (to find image)
+
     const medicine = await medicineModel.getMedicineById(medicineId);
 
     if (!medicine) {
       return res.status(404).json({ message: 'Medicine not found' });
     }
 
-    // 2. Delete Image File if it exists
+
     deleteImageFile(medicine.imageurl);
 
-    // 3. Delete from Database
+
     const deleted = await medicineModel.deleteMedicine(medicineId);
 
     if (!deleted) {

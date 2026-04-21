@@ -2,9 +2,7 @@ const bcrypt = require('bcrypt');
 const pool = require('../config/db');
 const userModel = require('../models/userModel');
 
-/* 
-   ADMIN – DASHBOARD STATS
- */
+// Dashboard statistics
 const getDashboardStats = async (req, res) => {
   try {
     const LOW_STOCK_THRESHOLD =
@@ -41,9 +39,7 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
-/* 
-   ADMIN – ADD DOCTOR
- */
+// Add new doctor account
 const addDoctor = async (req, res) => {
   try {
     const { fullName, email, password, phone } = req.body;
@@ -84,9 +80,7 @@ const addDoctor = async (req, res) => {
   }
 };
 
-/* 
-   ADMIN – DEACTIVATE DOCTOR (SOFT DELETE)
- */
+// Deactivate doctor (soft delete)
 const removeDoctor = async (req, res) => {
   try {
     const { doctorId } = req.params;
@@ -115,9 +109,7 @@ const removeDoctor = async (req, res) => {
   }
 };
 
-/* 
-   ADMIN – GET ALL DOCTORS
- */
+// Get all doctors
 const getAllDoctors = async (req, res) => {
   try {
     const doctors = await userModel.getAllDoctors();
